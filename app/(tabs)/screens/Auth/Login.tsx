@@ -51,7 +51,7 @@ export default function Login() {
         onChangeText={setPassword}
       />
       <TouchableOpacity
-  onPress={() => router.push('./ForgotPassword')}
+  onPress={() =>router.push('../Auth/ForgotPassword')}
   style={styles.forgotPasswordContainer}
 >
   <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
