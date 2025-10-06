@@ -40,7 +40,7 @@ export default function AdminDashboardScreen() {
           {/* Hotels Management */}
           <TouchableOpacity
             style={styles.card}
-            onPress={() => router.push("./Hotels")}
+            onPress={() => router.push("./Hotel")}
           >
             <Ionicons name="business" size={30} color="#D4AF37" />
             <Text style={styles.cardText}>Manage Hotels</Text>
@@ -49,7 +49,7 @@ export default function AdminDashboardScreen() {
           {/* Flights Management */}
           <TouchableOpacity
             style={styles.card}
-            onPress={() => router.push("./Flights")}
+            onPress={() => router.push("./Flight")}
           >
             <Ionicons name="airplane" size={30} color="#D4AF37" />
             <Text style={styles.cardText}>Manage Flights</Text>
@@ -63,7 +63,18 @@ export default function AdminDashboardScreen() {
             <Ionicons name="clipboard" size={30} color="#D4AF37" />
             <Text style={styles.cardText}>Manage Bookings</Text>
           </TouchableOpacity>
+
+           {/*Payments Option */}
+           <TouchableOpacity
+            style={styles.card}
+            onPress={() => router.push("./Payments")}
+          >
+            <Ionicons name="clipboard" size={30} color="#D4AF37" />
+            <Text style={styles.cardText}>Manage Payments</Text>
+          </TouchableOpacity>
+        
         </View>
+
       </SafeAreaView>
     </>
   );

@@ -50,6 +50,12 @@ export default function Login() {
         value={password}
         onChangeText={setPassword}
       />
+      <TouchableOpacity
+  onPress={() => router.push('./ForgotPassword')}
+  style={styles.forgotPasswordContainer}
+>
+  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+</TouchableOpacity>
 
       <View style={styles.roleSwitch}>
         <TouchableOpacity
@@ -70,7 +76,7 @@ export default function Login() {
         <Text style={styles.loginText}>LOGIN</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push('../Signup')} style={styles.signupContainer}>
+      <TouchableOpacity onPress={() => router.push('../screens/User/Signup')} style={styles.signupContainer}>
         <Text style={styles.signupText}>
           Don’t have an account? <Text style={styles.signupLink}>Sign Up</Text>
         </Text>
@@ -152,4 +158,13 @@ const styles = StyleSheet.create({
     color: "#D4AF37",
     fontWeight: "bold",
   },
+  forgotPasswordContainer: {
+  alignItems: "flex-end",
+  marginBottom: 15,
+},
+forgotPasswordText: {
+  color: "#D4AF37",
+  fontWeight: "bold",
+},
+// 
 });

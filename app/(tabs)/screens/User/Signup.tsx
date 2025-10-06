@@ -1,3 +1,4 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { router, Stack } from "expo-router";
 import React, { useState } from "react";
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -7,22 +8,45 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [dob, setDob] = useState<Date | undefined>(undefined);
+  const [showPicker, setShowPicker] = useState(false);
+   const [idOrPassport, setIdOrPassport] = useState(""); 
+
+  const getAge = (date: Date) => {
+    const today = new Date();
+    let age = today.getFullYear() - date.getFullYear();
+    const m = today.getMonth() - date.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
+      age--;
+    }
+    return age;
+  };
 
   const handleSignup = () => {
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-
-    // Later: send API request to backend to create user
-    console.log({ name, email, password, role: "user" });
-
-    // Redirect to User Home after signup
-    router.push("../screens/User/Homescreen");
+    if (!dob) {
+      alert("Please select your Date of Birth.");
+      return;
+    }
+    if (getAge(dob) < 18) {
+      alert("You must be at least 18 years old to sign up.");
+      return;
+    }
+     if (!idOrPassport.trim()) {
+      alert("Please enter your ID or Passport Number.");
+      return;
+    }
+    // ...existing code...
+    console.log({ name, email, password, dob: dob?.toISOString(), idOrPassport, role: "user" });
+    router.push("./Homescreen");
   };
 
+
   const handleLoginRedirect = () => {
-    router.push("../screens/Auth/Login");
+    router.push("../Auth/Login");
   };
 
   return (
@@ -47,13 +71,42 @@ export default function Signup() {
         value={name}
         onChangeText={setName}
       />
-
+ <TouchableOpacity
+        style={styles.input}
+        onPress={() => setShowPicker(true)}
+        activeOpacity={0.8}
+      >
+        <Text style={{ color: dob ? "#fff" : "#ccc" }}>
+          {dob
+            ? dob.toLocaleDateString()
+            : "Date of Birth (Tap to select)"}
+        </Text>
+      </TouchableOpacity>
+      {showPicker && (
+        <DateTimePicker
+          value={dob || new Date(2000, 0, 1)}
+          mode="date"
+          display="default"
+          maximumDate={new Date()}
+          onChange={(event, selectedDate) => {
+            setShowPicker(false);
+            if (selectedDate) setDob(selectedDate);
+          }}
+        />
+      )}
       <TextInput
         style={styles.input}
         placeholder="Email"
         placeholderTextColor="#ccc"
         value={email}
         onChangeText={setEmail}
+      />
+       <TextInput
+        style={styles.input}
+        placeholder="ID or Passport Number"
+        placeholderTextColor="#ccc"
+        value={idOrPassport}
+        onChangeText={setIdOrPassport}
       />
 
       <TextInput
@@ -78,11 +131,11 @@ export default function Signup() {
         <Text style={styles.signupText}>SIGN UP</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={handleLoginRedirect} style={styles.loginRedirect}>
-        <Text style={styles.loginText}>
-          Already have an account? <Text style={styles.loginLink}>Login</Text>
-        </Text>
-      </TouchableOpacity>
+    <TouchableOpacity onPress={handleLoginRedirect} style={styles.loginRedirect}>
+  <Text style={styles.loginText}>
+    Already have an account? <Text style={styles.loginLink}>Login</Text>
+  </Text>
+</TouchableOpacity>
     </View>
   );
 }
