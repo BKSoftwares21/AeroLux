@@ -25,6 +25,7 @@ export default function Search() {
           />
           <Text style={styles.appName}>Aerolux</Text>
           <Ionicons name="menu" size={28} color="#D4AF37" />
+        
         </View>
 
         <Text style={styles.title}>Search</Text>
@@ -71,6 +72,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0A1A2F",
     padding: 20,
+  },
+    header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   title: {
     fontSize: 24,
