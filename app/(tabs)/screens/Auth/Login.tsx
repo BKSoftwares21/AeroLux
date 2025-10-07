@@ -9,14 +9,14 @@ export default function Login() {
 
   const handleLogin = () => {
     if (role === "user") {
-      router.push("../screens/User/Homescreen");
+      router.push("/screens/User/Homescreen");
     } else if (role === "admin") {
-      router.push("../screens/Admin/AdminDashboardScreen");
+      router.push("/screens/Admin/AdminDashboardScreen");
     }
   };
 
   const handleSignup = () => {
-    router.push("../screens/Auth/Signup");
+    router.push("/screens/User/Signup");
   };
 
   return (
@@ -50,12 +50,13 @@ export default function Login() {
         value={password}
         onChangeText={setPassword}
       />
+
       <TouchableOpacity
-  onPress={() =>router.push('../Auth/ForgotPassword')}
-  style={styles.forgotPasswordContainer}
->
-  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-</TouchableOpacity>
+        onPress={() => router.push('/screens/Auth/ForgotPassword')}
+        style={styles.forgotPasswordContainer}
+      >
+        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+      </TouchableOpacity>
 
       <View style={styles.roleSwitch}>
         <TouchableOpacity
@@ -76,9 +77,9 @@ export default function Login() {
         <Text style={styles.loginText}>LOGIN</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push('../screens/User/Signup')} style={styles.signupContainer}>
+      <TouchableOpacity onPress={handleSignup} style={styles.signupContainer}>
         <Text style={styles.signupText}>
-          Don’t have an account? <Text style={styles.signupLink}>Sign Up</Text>
+          Don't have an account? <Text style={styles.signupLink}>Sign Up</Text>
         </Text>
       </TouchableOpacity>
     </View>
@@ -147,6 +148,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
+  forgotPasswordContainer: {
+    marginTop: 15,
+    alignItems: "center",
+  },
+  forgotPasswordText: {
+    color: "#D4AF37",
+    fontSize: 14,
+  },
   signupContainer: {
     marginTop: 20,
     alignItems: "center",
@@ -158,13 +167,4 @@ const styles = StyleSheet.create({
     color: "#D4AF37",
     fontWeight: "bold",
   },
-  forgotPasswordContainer: {
-  alignItems: "flex-end",
-  marginBottom: 15,
-},
-forgotPasswordText: {
-  color: "#D4AF37",
-  fontWeight: "bold",
-},
-// 
 });
