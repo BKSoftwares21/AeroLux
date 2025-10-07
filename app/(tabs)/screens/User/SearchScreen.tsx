@@ -1,10 +1,12 @@
 // screens/Search.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-
+import UserModal from './UserModal';
 export default function Search() {
+
+    const [modalVisible, setModalVisible] = useState(false);
 
   const data = [
     { id: "1", name: "Hotel BlueSky", location: "Cape Town" },
@@ -24,7 +26,10 @@ export default function Search() {
             style={styles.logo} 
           />
           <Text style={styles.appName}>Aerolux</Text>
-          <Ionicons name="menu" size={28} color="#D4AF37" />
+          
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <Ionicons name="menu" size={28} color="#D4AF37" />
+          </TouchableOpacity>
         
         </View>
 
@@ -60,8 +65,14 @@ export default function Search() {
           <Ionicons name="heart" size={26} color="#0A1A2F" />
           <Ionicons name="person" size={26} color="#0A1A2F" />
         </View>
-
+          
       </SafeAreaView>
+<UserModal visible={modalVisible} onClose={() => setModalVisible(false)}>
+          <Text style={{ color: "#0A1A2F", fontSize: 18, textAlign: "center" }}>
+            Profile or settings go here!
+          </Text>
+        </UserModal>
+
     </>
   );
 }

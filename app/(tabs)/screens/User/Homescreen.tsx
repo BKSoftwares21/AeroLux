@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-
+import UserModal from './UserModal';
 export default function HomeScreen() {
+
+  const [modalVisible, setModalVisible] = useState(false);
+
   return (
     <>
       {/* Hide the default Expo Router header */}
@@ -18,8 +20,11 @@ export default function HomeScreen() {
             style={styles.logo} 
           />
           <Text style={styles.appName}>Aerolux</Text>
-          <Ionicons name="menu" size={28} color="#D4AF37" />
+           <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <Ionicons name="menu" size={28} color="#D4AF37" />
+          </TouchableOpacity>
         </View>
+        
 
         {/* Welcome Message */}
         <Text style={styles.welcomeText}>Welcome Benita!</Text>
@@ -52,6 +57,13 @@ export default function HomeScreen() {
           <Ionicons name="heart" size={26} color="#0A1A2F" />
           <Ionicons name="person" size={26} color="#0A1A2F" />
         </View>
+
+        {/* User Modal */}
+        <UserModal visible={modalVisible} onClose={() => setModalVisible(false)}>
+          <Text style={{ color: "#0A1A2F", fontSize: 18, textAlign: "center" }}>
+            Profile or settings go here!
+          </Text>
+        </UserModal>
       </SafeAreaView>
     </>
   );
