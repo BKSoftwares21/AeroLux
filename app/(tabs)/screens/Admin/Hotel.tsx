@@ -1,11 +1,14 @@
+import { Picker } from "@react-native-picker/picker";
+import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
-    FlatList,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 interface Hotel {
@@ -15,7 +18,20 @@ interface Hotel {
   description: string;
   pricePerNight: number;
   rating: number;
+  imageUri?: string;
+  bedType?: string;
 }
+
+const bedTypes = [
+  "Single",
+  "Double",
+  "Queen",
+  "King",
+  "Twin",
+  "Bunk",
+  "Sofa Bed",
+  "Studio",
+];
 
 export default function Hotel() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
@@ -26,6 +42,8 @@ export default function Hotel() {
   const [description, setDescription] = useState("");
   const [pricePerNight, setPricePerNight] = useState("");
   const [rating, setRating] = useState("");
+  const [imageUri, setImageUri] = useState<string | undefined>(undefined);
+  const [bedType, setBedType] = useState<string>(bedTypes[0]);
 
   const resetForm = () => {
     setName("");
@@ -33,7 +51,21 @@ export default function Hotel() {
     setDescription("");
     setPricePerNight("");
     setRating("");
+    setImageUri(undefined);
+    setBedType(bedTypes[0]);
     setEditingHotel(null);
+  };
+
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setImageUri(result.assets[0].uri);
+    }
   };
 
   const handleSave = () => {
@@ -50,6 +82,8 @@ export default function Hotel() {
                 description,
                 pricePerNight: Number(pricePerNight),
                 rating: Number(rating),
+                imageUri,
+                bedType,
               }
             : hotel
         )
@@ -62,6 +96,8 @@ export default function Hotel() {
         description,
         pricePerNight: Number(pricePerNight),
         rating: Number(rating),
+        imageUri,
+        bedType,
       };
       setHotels([...hotels, newHotel]);
     }
@@ -75,6 +111,8 @@ export default function Hotel() {
     setDescription(hotel.description);
     setPricePerNight(hotel.pricePerNight.toString());
     setRating(hotel.rating.toString());
+    setImageUri(hotel.imageUri);
+    setBedType(hotel.bedType || bedTypes[0]);
   };
 
   const handleDelete = (id: number) => {
@@ -86,6 +124,13 @@ export default function Hotel() {
       <Text style={styles.header}>Manage Hotels</Text>
 
       {/* Form */}
+      <TouchableOpacity style={styles.imagePicker} onPress={handlePickImage}>
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.hotelImage} />
+        ) : (
+          <Text style={styles.imagePickerText}>Pick Hotel Image</Text>
+        )}
+      </TouchableOpacity>
       <TextInput
         style={styles.input}
         placeholder="Hotel Name"
@@ -124,6 +169,20 @@ export default function Hotel() {
         keyboardType="numeric"
       />
 
+      {/* Bed Type Picker */}
+      <View style={styles.pickerWrapper}>
+        <Text style={styles.pickerLabel}>Bed Type:</Text>
+        <Picker
+          selectedValue={bedType}
+          style={styles.picker}
+          onValueChange={(itemValue: string) => setBedType(itemValue)}
+        >
+          {bedTypes.map((type) => (
+            <Picker.Item label={type} value={type} key={type} />
+          ))}
+        </Picker>
+      </View>
+
       <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
         <Text style={styles.saveText}>
           {editingHotel ? "Update Hotel" : "Add Hotel"}
@@ -136,6 +195,9 @@ export default function Hotel() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.card}>
+            {item.imageUri && (
+              <Image source={{ uri: item.imageUri }} style={styles.hotelImage} />
+            )}
             <Text style={styles.cardText}>
               {item.name} - {item.location}
             </Text>
@@ -144,6 +206,9 @@ export default function Hotel() {
             </Text>
             <Text style={styles.cardSub}>
               ${item.pricePerNight} / night | ⭐ {item.rating}
+            </Text>
+            <Text style={styles.cardSub}>
+              Bed Type: {item.bedType}
             </Text>
 
             <View style={styles.cardActions}>
@@ -180,6 +245,24 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
+  imagePicker: {
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  imagePickerText: {
+    color: "#FFD700",
+    fontSize: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#FFD700",
+    borderRadius: 8,
+  },
+  hotelImage: {
+    width: 120,
+    height: 90,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
   input: {
     borderWidth: 1,
     borderColor: "#FFFFFF",
@@ -206,6 +289,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
+    alignItems: "center",
   },
   cardText: {
     color: "#FFD700",
@@ -221,19 +305,45 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 10,
+    width: "100%",
   },
   editButton: {
     backgroundColor: "#3B82F6",
     padding: 8,
     borderRadius: 6,
+    flex: 1,
+    alignItems: "center",
+    marginRight: 5,
   },
   deleteButton: {
     backgroundColor: "#EF4444",
     padding: 8,
     borderRadius: 6,
+    flex: 1,
+    alignItems: "center",
+    marginLeft: 5,
   },
   actionText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  pickerWrapper: {
+    marginBottom: 10,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#FFFFFF",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  pickerLabel: {
+    color: "#FFD700",
+    fontWeight: "bold",
+    marginBottom: 2,
+  },
+  picker: {
+    color: "#fff",
+    backgroundColor: "transparent",
+    width: "100%",
   },
 });

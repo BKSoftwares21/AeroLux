@@ -1,12 +1,14 @@
 // screens/Admin/AdminHome.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AdminModal from "./AdminModal";
 
 export default function AdminDashboardScreen() {
   const router = useRouter();
+  const [modalVisible, setModalVisible] = useState(false);
 
   return (
     <>
@@ -20,7 +22,9 @@ export default function AdminDashboardScreen() {
             style={styles.logo} 
           />
           <Text style={styles.appName}>Aerolux</Text>
-          <Ionicons name="menu" size={28} color="#D4AF37" />
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <Ionicons name="menu" size={28} color="#D4AF37" />
+          </TouchableOpacity>
         </View>
 
         {/* Title */}
@@ -74,8 +78,10 @@ export default function AdminDashboardScreen() {
           </TouchableOpacity>
         
         </View>
-
       </SafeAreaView>
+
+      {/* Admin Modal */}
+      <AdminModal visible={modalVisible} onClose={() => setModalVisible(false)} />
     </>
   );
 }

@@ -5,13 +5,12 @@ import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View } from "react
 
 const { height } = require("react-native").Dimensions.get("window");
 
-type UserModalProps = {
+type AdminModalProps = {
   visible: boolean;
   onClose?: () => void;
-  children?: React.ReactNode;
 };
 
-export default function UserModal({ visible, onClose, children }: UserModalProps) {
+export default function AdminModal({ visible, onClose }: AdminModalProps) {
   const slideAnim = useRef(new Animated.Value(height)).current;
   const router = useRouter();
 
@@ -41,11 +40,11 @@ export default function UserModal({ visible, onClose, children }: UserModalProps
     });
   };
 
-  const handleNavigate = (path: "/screens/User/Profile" | "/screens/User/Notifications") => {
+  const handleProfileSettings = () => {
     handleClose();
     setTimeout(() => {
-      router.push(path);
-    }, 350); // Wait for animation to finish
+      router.push("/screens/Admin/ProfileAdmin");
+    }, 350);
   };
 
   const handleLogout = () => {
@@ -70,17 +69,10 @@ export default function UserModal({ visible, onClose, children }: UserModalProps
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.option}
-            onPress={() => handleNavigate("/screens/User/Profile")}
+            onPress={handleProfileSettings}
           >
-            <Ionicons name="person-circle-outline" size={24} color="#0A1A2F" style={styles.optionIcon} />
-            <Text style={styles.optionText}>Account Settings</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.option}
-            onPress={() => handleNavigate("/screens/User/Notifications")}
-          >
-            <Ionicons name="notifications-outline" size={24} color="#0A1A2F" style={styles.optionIcon} />
-            <Text style={styles.optionText}>Notifications</Text>
+            <Ionicons name="settings-outline" size={24} color="#0A1A2F" style={styles.optionIcon} />
+            <Text style={styles.optionText}>Profile Settings</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.logoutOption}
@@ -106,7 +98,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 24,
-    minHeight: 220,
+    minHeight: 160,
   },
   closeButton: {
     alignSelf: "flex-end",

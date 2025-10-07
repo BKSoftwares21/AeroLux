@@ -1,21 +1,26 @@
+import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
-    FlatList,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 interface Flight {
   id: number;
   flightNumber: string;
+  airline: string;
   departure: string;
   arrival: string;
   date: string;
   time: string;
   price: number;
+  imageUri?: string;
+  isFirstClass: boolean;
 }
 
 export default function AdminFlightsScreen() {
@@ -23,24 +28,42 @@ export default function AdminFlightsScreen() {
   const [editingFlight, setEditingFlight] = useState<Flight | null>(null);
 
   const [flightNumber, setFlightNumber] = useState("");
+  const [airline, setAirline] = useState("");
   const [departure, setDeparture] = useState("");
   const [arrival, setArrival] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [price, setPrice] = useState("");
+  const [imageUri, setImageUri] = useState<string | undefined>(undefined);
+  const [isFirstClass, setIsFirstClass] = useState(false);
 
   const resetForm = () => {
     setFlightNumber("");
+    setAirline("");
     setDeparture("");
     setArrival("");
     setDate("");
     setTime("");
     setPrice("");
+    setImageUri(undefined);
+    setIsFirstClass(false);
     setEditingFlight(null);
   };
 
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
   const handleSave = () => {
-    if (!flightNumber || !departure || !arrival || !price) return;
+    if (!flightNumber || !airline || !departure || !arrival || !price) return;
 
     if (editingFlight) {
       setFlights((prev) =>
@@ -49,11 +72,14 @@ export default function AdminFlightsScreen() {
             ? {
                 ...f,
                 flightNumber,
+                airline,
                 departure,
                 arrival,
                 date,
                 time,
                 price: Number(price),
+                imageUri,
+                isFirstClass,
               }
             : f
         )
@@ -62,11 +88,14 @@ export default function AdminFlightsScreen() {
       const newFlight: Flight = {
         id: flights.length + 1,
         flightNumber,
+        airline,
         departure,
         arrival,
         date,
         time,
         price: Number(price),
+        imageUri,
+        isFirstClass,
       };
       setFlights([...flights, newFlight]);
     }
@@ -76,11 +105,14 @@ export default function AdminFlightsScreen() {
   const handleEdit = (flight: Flight) => {
     setEditingFlight(flight);
     setFlightNumber(flight.flightNumber);
+    setAirline(flight.airline);
     setDeparture(flight.departure);
     setArrival(flight.arrival);
     setDate(flight.date);
     setTime(flight.time);
     setPrice(flight.price.toString());
+    setImageUri(flight.imageUri);
+    setIsFirstClass(flight.isFirstClass);
   };
 
   const handleDelete = (id: number) => {
@@ -91,6 +123,15 @@ export default function AdminFlightsScreen() {
     <View style={styles.container}>
       <Text style={styles.header}>Manage Flights</Text>
 
+      {/* Image Picker */}
+      <TouchableOpacity style={styles.imagePicker} onPress={handlePickImage}>
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.flightImage} />
+        ) : (
+          <Text style={styles.imagePickerText}>Pick Flight Image</Text>
+        )}
+      </TouchableOpacity>
+
       {/* Form */}
       <TextInput
         style={styles.input}
@@ -98,6 +139,13 @@ export default function AdminFlightsScreen() {
         placeholderTextColor="#ccc"
         value={flightNumber}
         onChangeText={setFlightNumber}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Airline Name"
+        placeholderTextColor="#ccc"
+        value={airline}
+        onChangeText={setAirline}
       />
       <TextInput
         style={styles.input}
@@ -136,6 +184,42 @@ export default function AdminFlightsScreen() {
         keyboardType="numeric"
       />
 
+      {/* Flight Type Toggle */}
+      <View style={styles.toggleRow}>
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            isFirstClass && styles.toggleButtonActive,
+          ]}
+          onPress={() => setIsFirstClass(true)}
+        >
+          <Text
+            style={[
+              styles.toggleText,
+              isFirstClass && styles.toggleTextActive,
+            ]}
+          >
+            First Class
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            !isFirstClass && styles.toggleButtonActive,
+          ]}
+          onPress={() => setIsFirstClass(false)}
+        >
+          <Text
+            style={[
+              styles.toggleText,
+              !isFirstClass && styles.toggleTextActive,
+            ]}
+          >
+            Economy
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
         <Text style={styles.saveText}>
           {editingFlight ? "Update Flight" : "Add Flight"}
@@ -148,13 +232,22 @@ export default function AdminFlightsScreen() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.card}>
+            {item.imageUri && (
+              <Image source={{ uri: item.imageUri }} style={styles.flightImage} />
+            )}
             <Text style={styles.cardText}>
-              {item.flightNumber} | {item.departure} → {item.arrival}
+              {item.flightNumber} | {item.airline}
+            </Text>
+            <Text style={styles.cardSub}>
+              {item.departure} → {item.arrival}
             </Text>
             <Text style={styles.cardSub}>
               {item.date} at {item.time}
             </Text>
             <Text style={styles.cardSub}>${item.price}</Text>
+            <Text style={styles.cardSub}>
+              {item.isFirstClass ? "First Class" : "Economy"}
+            </Text>
 
             <View style={styles.cardActions}>
               <TouchableOpacity
@@ -190,6 +283,24 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
+  imagePicker: {
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  imagePickerText: {
+    color: "#FFD700",
+    fontSize: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#FFD700",
+    borderRadius: 8,
+  },
+  flightImage: {
+    width: 120,
+    height: 90,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
   input: {
     borderWidth: 1,
     borderColor: "#FFFFFF",
@@ -198,6 +309,31 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 8,
     backgroundColor: "rgba(255,255,255,0.1)",
+  },
+  toggleRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 15,
+    gap: 10,
+  },
+  toggleButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#FFD700",
+    backgroundColor: "transparent",
+    marginHorizontal: 5,
+  },
+  toggleButtonActive: {
+    backgroundColor: "#FFD700",
+  },
+  toggleText: {
+    color: "#FFD700",
+    fontWeight: "bold",
+  },
+  toggleTextActive: {
+    color: "#0A1A2F",
   },
   saveButton: {
     backgroundColor: "#FFD700",
@@ -216,6 +352,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
+    alignItems: "center",
   },
   cardText: {
     color: "#FFD700",
@@ -231,16 +368,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 10,
+    width: "100%",
   },
   editButton: {
     backgroundColor: "#3B82F6",
     padding: 8,
     borderRadius: 6,
+    flex: 1,
+    alignItems: "center",
+    marginRight: 5,
   },
   deleteButton: {
     backgroundColor: "#EF4444",
     padding: 8,
     borderRadius: 6,
+    flex: 1,
+    alignItems: "center",
+    marginLeft: 5,
   },
   actionText: {
     color: "#fff",

@@ -1,22 +1,27 @@
 // screens/Admin/AdminUsersScreen.tsx
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { Stack } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    FlatList,
-    Image,
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  FlatList,
+  Image,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type User = {
   id: string;
   name: string;
   email: string;
+  phone: string;
+  dob: string; // ISO string
+  idOrPassport: string;
   role: "user" | "admin";
   createdAt: string;
 };
@@ -28,22 +33,58 @@ export default function Users() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dob, setDob] = useState<Date | undefined>(undefined);
+  const [showPicker, setShowPicker] = useState(false);
+  const [idOrPassport, setIdOrPassport] = useState("");
   const [role, setRole] = useState<"user" | "admin">("user");
 
   // Load users (later connect to backend API)
   useEffect(() => {
     setUsers([
-      { id: "1", name: "Alice", email: "alice@mail.com", role: "user", createdAt: "2025-09-01" },
-      { id: "2", name: "Bob", email: "bob@mail.com", role: "admin", createdAt: "2025-09-02" },
+      {
+        id: "1",
+        name: "Alice",
+        email: "alice@mail.com",
+        phone: "+267 123 4567",
+        dob: "2000-01-01",
+        idOrPassport: "A1234567",
+        role: "user",
+        createdAt: "2025-09-01",
+      },
+      {
+        id: "2",
+        name: "Bob",
+        email: "bob@mail.com",
+        phone: "+267 987 6543",
+        dob: "1995-05-10",
+        idOrPassport: "B7654321",
+        role: "admin",
+        createdAt: "2025-09-02",
+      },
     ]);
   }, []);
 
   const handleSave = () => {
+    if (!name || !email || !phone || !dob || !idOrPassport) {
+      alert("Please fill in all fields.");
+      return;
+    }
     if (editingUser) {
       // Update existing user
       setUsers((prev) =>
         prev.map((u) =>
-          u.id === editingUser.id ? { ...editingUser, name, email, role } : u
+          u.id === editingUser.id
+            ? {
+                ...editingUser,
+                name,
+                email,
+                phone,
+                dob: dob.toISOString().slice(0, 10),
+                idOrPassport,
+                role,
+              }
+            : u
         )
       );
     } else {
@@ -52,6 +93,9 @@ export default function Users() {
         id: Date.now().toString(),
         name,
         email,
+        phone,
+        dob: dob.toISOString().slice(0, 10),
+        idOrPassport,
         role,
         createdAt: new Date().toISOString(),
       };
@@ -61,6 +105,9 @@ export default function Users() {
     setEditingUser(null);
     setName("");
     setEmail("");
+    setPhone("");
+    setDob(undefined);
+    setIdOrPassport("");
     setRole("user");
   };
 
@@ -68,6 +115,9 @@ export default function Users() {
     setEditingUser(user);
     setName(user.name);
     setEmail(user.email);
+    setPhone(user.phone);
+    setDob(new Date(user.dob));
+    setIdOrPassport(user.idOrPassport);
     setRole(user.role);
     setModalVisible(true);
   };
@@ -78,15 +128,15 @@ export default function Users() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false}} />
- <View style={styles.topNav}>
-          <Image 
-            source={require('../../../../assets/images/logo.png')} 
-            style={styles.logo} 
-          />
-          <Text style={styles.appName}>Aerolux</Text>
-          <Ionicons name="menu" size={28} color="#D4AF37" />
-        </View>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.topNav}>
+        <Image
+          source={require('../../../../assets/images/logo.png')}
+          style={styles.logo}
+        />
+        <Text style={styles.appName}>Aerolux</Text>
+        <Ionicons name="menu" size={28} color="#D4AF37" />
+      </View>
 
       <FlatList
         data={users}
@@ -95,6 +145,9 @@ export default function Users() {
           <View style={styles.card}>
             <Text style={styles.userText}>{item.name} ({item.role})</Text>
             <Text style={styles.emailText}>{item.email}</Text>
+            <Text style={styles.detailText}>Phone: {item.phone}</Text>
+            <Text style={styles.detailText}>DOB: {item.dob}</Text>
+            <Text style={styles.detailText}>ID/Passport: {item.idOrPassport}</Text>
             <View style={styles.actions}>
               <TouchableOpacity onPress={() => handleEdit(item)} style={styles.editButton}>
                 <Text style={styles.actionText}>Edit</Text>
@@ -114,6 +167,9 @@ export default function Users() {
           setEditingUser(null);
           setName("");
           setEmail("");
+          setPhone("");
+          setDob(undefined);
+          setIdOrPassport("");
           setRole("user");
           setModalVisible(true);
         }}
@@ -141,6 +197,57 @@ export default function Users() {
               placeholderTextColor="#aaa"
               value={email}
               onChangeText={setEmail}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Phone Number"
+              placeholderTextColor="#aaa"
+              value={phone}
+              onChangeText={setPhone}
+            />
+            {/* Date of Birth */}
+            {Platform.OS === "web" ? (
+              <TextInput
+                style={styles.input}
+                placeholder="Date of Birth (YYYY-MM-DD)"
+                placeholderTextColor="#aaa"
+                value={dob ? dob.toISOString().slice(0, 10) : ""}
+                onChangeText={text => {
+                  const parsed = new Date(text);
+                  if (!isNaN(parsed.getTime())) setDob(parsed);
+                }}
+              />
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => setShowPicker(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ color: dob ? "#fff" : "#aaa" }}>
+                    {dob ? dob.toLocaleDateString() : "Date of Birth (Tap to select)"}
+                  </Text>
+                </TouchableOpacity>
+                {showPicker && (
+                  <DateTimePicker
+                    value={dob || new Date(2000, 0, 1)}
+                    mode="date"
+                    display="default"
+                    maximumDate={new Date()}
+                    onChange={(event, selectedDate) => {
+                      setShowPicker(false);
+                      if (selectedDate) setDob(selectedDate);
+                    }}
+                  />
+                )}
+              </>
+            )}
+            <TextInput
+              style={styles.input}
+              placeholder="ID or Passport Number"
+              placeholderTextColor="#aaa"
+              value={idOrPassport}
+              onChangeText={setIdOrPassport}
             />
             <View style={styles.roleSwitch}>
               <TouchableOpacity
@@ -175,7 +282,7 @@ export default function Users() {
 }
 
 const styles = StyleSheet.create({
-     topNav: {
+  topNav: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -199,6 +306,7 @@ const styles = StyleSheet.create({
   },
   userText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   emailText: { color: "#ccc", marginBottom: 5 },
+  detailText: { color: "#ccc", marginBottom: 2 },
   actions: { flexDirection: "row", gap: 10 },
   editButton: { backgroundColor: "#D4AF37", padding: 8, borderRadius: 5 },
   deleteButton: { backgroundColor: "red", padding: 8, borderRadius: 5 },
