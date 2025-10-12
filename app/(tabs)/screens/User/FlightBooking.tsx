@@ -1,83 +1,174 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { router } from "expo-router";
+import React from "react";
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export default function FlightBooking() {
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [date, setDate] = useState("");
-  const [passengers, setPassengers] = useState("1");
+export default function FlightBooking({ route }: any) {
+  const { flight } = route?.params || {
+    flight: {
+      flightNumber: "ALX452",
+      airline: "AeroLux Airlines",
+      departure: "Johannesburg",
+      arrival: "Paris",
+      date: "2025-10-25",
+      time: "14:30",
+      price: 899,
+      imageUri: require("../../../../assets/images/OIP.jpg"),
+      isFirstClass: true,
+    },
+  };
 
-  const handleBooking = () => {
-    console.log({ from, to, date, passengers });
-    // Later: call backend API
+  const handleBook = () => {
+    router.push({
+      pathname: "/(tabs)/screens/User/BookingConfirmationScreen",
+      params: { flightNumber: flight.flightNumber, price: flight.price },
+    });
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Book a Flight</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      {/* Header */}
+      <Text style={styles.header}>Flight Details</Text>
 
-      <TextInput
-        placeholder="From"
-        value={from}
-        onChangeText={setFrom}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="To"
-        value={to}
-        onChangeText={setTo}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Date (YYYY-MM-DD)"
-        value={date}
-        onChangeText={setDate}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Passengers"
-        value={passengers}
-        onChangeText={setPassengers}
-        style={styles.input}
-        keyboardType="numeric"
-      />
+      {/* Card Container */}
+      <View style={styles.card}>
+        <Image
+          source={
+            flight.imageUri
+              ? typeof flight.imageUri === "string"
+                ? { uri: flight.imageUri }
+                : flight.imageUri
+              : require("../../../../assets/images/OIP.jpg")
+          }
+          style={styles.image}
+        />
 
-      <TouchableOpacity style={styles.button} onPress={handleBooking}>
-        <Text style={styles.buttonText}>Search Flights</Text>
-      </TouchableOpacity>
-    </View>
+        <Text style={styles.title}>{flight.airline}</Text>
+        <Text style={styles.subTitle}>Flight: {flight.flightNumber}</Text>
+
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailLabel}>From:</Text>
+          <Text style={styles.detailValue}>{flight.departure}</Text>
+        </View>
+
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailLabel}>To:</Text>
+          <Text style={styles.detailValue}>{flight.arrival}</Text>
+        </View>
+
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailLabel}>Date:</Text>
+          <Text style={styles.detailValue}>{flight.date}</Text>
+        </View>
+
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailLabel}>Time:</Text>
+          <Text style={styles.detailValue}>{flight.time}</Text>
+        </View>
+
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailLabel}>Class:</Text>
+          <Text style={styles.detailValue}>
+            {flight.isFirstClass ? "First Class" : "Economy"}
+          </Text>
+        </View>
+
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailLabel}>Price:</Text>
+          <Text style={styles.price}>${flight.price}</Text>
+        </View>
+
+        {/* Buttons */}
+        <TouchableOpacity style={styles.bookButton} onPress={handleBook}>
+          <Text style={styles.bookText}>Book Flight</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.push("../screens/User/SearchScreen")}
+        >
+          <Text style={styles.backText}>Back to Search</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    padding: 20,
+    backgroundColor: "#0A1A2F",
+    flexGrow: 1,
+    alignItems: "center",
     justifyContent: "center",
+    padding: 20,
   },
-  title: {
-    fontSize: 22,
+  header: {
+    fontSize: 26,
     fontWeight: "bold",
+    color: "#FFD700",
     marginBottom: 20,
-    textAlign: "center",
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    padding: 12,
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 20,
+    width: "100%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  image: {
+    width: "100%",
+    height: 180,
+    borderRadius: 12,
     marginBottom: 15,
   },
-  button: {
-    backgroundColor: "#007AFF",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#0A1A2F",
   },
-  buttonText: {
-    color: "#fff",
+  subTitle: {
+    color: "#555",
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  detailsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginVertical: 4,
+  },
+  detailLabel: {
+    color: "#0A1A2F",
+    fontWeight: "600",
+  },
+  detailValue: {
+    color: "#444",
+  },
+  price: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#D4AF37",
+  },
+  bookButton: {
+    backgroundColor: "#FFD700",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    marginTop: 20,
+  },
+  bookText: {
+    color: "#0A1A2F",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  backButton: {
+    marginTop: 15,
+  },
+  backText: {
+    color: "#FFD700",
+    fontWeight: "bold",
   },
 });
