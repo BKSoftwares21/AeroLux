@@ -42,7 +42,7 @@ export default function HotelDetailsScreen({ route }: any) {
               ? typeof hotel.imageUri === "string"
                 ? { uri: hotel.imageUri }
                 : hotel.imageUri
-              : require("../../../../assets/images/hotel-placeholder.png")
+              : require("../../../../assets/images/hotel-placeholder.jpg")
           }
           style={styles.image}
         />

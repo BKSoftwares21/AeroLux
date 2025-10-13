@@ -19,7 +19,7 @@ interface Flight {
   date: string;
   time: string;
   price: number;
-  imageUri?: string;
+  imageUrl?: string;
   isFirstClass: boolean;
 }
 
@@ -34,7 +34,7 @@ export default function AdminFlightsScreen() {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [price, setPrice] = useState("");
-  const [imageUri, setImageUri] = useState<string | undefined>(undefined);
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [isFirstClass, setIsFirstClass] = useState(false);
 
   const resetForm = () => {
@@ -45,7 +45,7 @@ export default function AdminFlightsScreen() {
     setDate("");
     setTime("");
     setPrice("");
-    setImageUri(undefined);
+    setImageUrl(undefined);
     setIsFirstClass(false);
     setEditingFlight(null);
   };
@@ -57,8 +57,8 @@ export default function AdminFlightsScreen() {
       aspect: [4, 3],
       quality: 0.7,
     });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setImageUri(result.assets[0].uri);
+    if (!result.canceled && result.assets?.length) {
+      setImageUrl(result.assets[0].uri);
     }
   };
 
@@ -69,18 +69,7 @@ export default function AdminFlightsScreen() {
       setFlights((prev) =>
         prev.map((f) =>
           f.id === editingFlight.id
-            ? {
-                ...f,
-                flightNumber,
-                airline,
-                departure,
-                arrival,
-                date,
-                time,
-                price: Number(price),
-                imageUri,
-                isFirstClass,
-              }
+            ? { ...f, flightNumber, airline, departure, arrival, date, time, price: +price, imageUrl, isFirstClass }
             : f
         )
       );
@@ -93,8 +82,8 @@ export default function AdminFlightsScreen() {
         arrival,
         date,
         time,
-        price: Number(price),
-        imageUri,
+        price: +price,
+        imageUrl,
         isFirstClass,
       };
       setFlights([...flights, newFlight]);
@@ -111,7 +100,7 @@ export default function AdminFlightsScreen() {
     setDate(flight.date);
     setTime(flight.time);
     setPrice(flight.price.toString());
-    setImageUri(flight.imageUri);
+    setImageUrl(flight.imageUrl);
     setIsFirstClass(flight.isFirstClass);
   };
 
@@ -121,109 +110,44 @@ export default function AdminFlightsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Manage Flights</Text>
+      <Text style={styles.header}>✈️ Manage Flights</Text>
 
-      {/* Image Picker */}
+      {/* Image Upload */}
       <TouchableOpacity style={styles.imagePicker} onPress={handlePickImage}>
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} style={styles.flightImage} />
+        {imageUrl ? (
+          <Image source={{ uri: imageUrl }} style={styles.flightImage} />
         ) : (
-          <Text style={styles.imagePickerText}>Pick Flight Image</Text>
+          <Text style={styles.imagePickerText}>Upload Flight Image</Text>
         )}
       </TouchableOpacity>
 
-      {/* Form */}
-      <TextInput
-        style={styles.input}
-        placeholder="Flight Number"
-        placeholderTextColor="#ccc"
-        value={flightNumber}
-        onChangeText={setFlightNumber}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Airline Name"
-        placeholderTextColor="#ccc"
-        value={airline}
-        onChangeText={setAirline}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Departure"
-        placeholderTextColor="#ccc"
-        value={departure}
-        onChangeText={setDeparture}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Arrival"
-        placeholderTextColor="#ccc"
-        value={arrival}
-        onChangeText={setArrival}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Date (YYYY-MM-DD)"
-        placeholderTextColor="#ccc"
-        value={date}
-        onChangeText={setDate}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Time (HH:MM)"
-        placeholderTextColor="#ccc"
-        value={time}
-        onChangeText={setTime}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Price"
-        placeholderTextColor="#ccc"
-        value={price}
-        onChangeText={setPrice}
-        keyboardType="numeric"
-      />
+      {/* Form Fields */}
+      <TextInput style={styles.input} placeholder="Flight Number" value={flightNumber} onChangeText={setFlightNumber} placeholderTextColor="#ccc" />
+      <TextInput style={styles.input} placeholder="Airline" value={airline} onChangeText={setAirline} placeholderTextColor="#ccc" />
+      <TextInput style={styles.input} placeholder="Departure" value={departure} onChangeText={setDeparture} placeholderTextColor="#ccc" />
+      <TextInput style={styles.input} placeholder="Arrival" value={arrival} onChangeText={setArrival} placeholderTextColor="#ccc" />
+      <TextInput style={styles.input} placeholder="Date (YYYY-MM-DD)" value={date} onChangeText={setDate} placeholderTextColor="#ccc" />
+      <TextInput style={styles.input} placeholder="Time (HH:MM)" value={time} onChangeText={setTime} placeholderTextColor="#ccc" />
+      <TextInput style={styles.input} placeholder="Price" value={price} onChangeText={setPrice} keyboardType="numeric" placeholderTextColor="#ccc" />
 
-      {/* Flight Type Toggle */}
+      {/* Toggle Class */}
       <View style={styles.toggleRow}>
         <TouchableOpacity
-          style={[
-            styles.toggleButton,
-            isFirstClass && styles.toggleButtonActive,
-          ]}
+          style={[styles.toggleButton, isFirstClass && styles.toggleButtonActive]}
           onPress={() => setIsFirstClass(true)}
         >
-          <Text
-            style={[
-              styles.toggleText,
-              isFirstClass && styles.toggleTextActive,
-            ]}
-          >
-            First Class
-          </Text>
+          <Text style={[styles.toggleText, isFirstClass && styles.toggleTextActive]}>First Class</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.toggleButton,
-            !isFirstClass && styles.toggleButtonActive,
-          ]}
+          style={[styles.toggleButton, !isFirstClass && styles.toggleButtonActive]}
           onPress={() => setIsFirstClass(false)}
         >
-          <Text
-            style={[
-              styles.toggleText,
-              !isFirstClass && styles.toggleTextActive,
-            ]}
-          >
-            Economy
-          </Text>
+          <Text style={[styles.toggleText, !isFirstClass && styles.toggleTextActive]}>Economy</Text>
         </TouchableOpacity>
       </View>
 
       <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveText}>
-          {editingFlight ? "Update Flight" : "Add Flight"}
-        </Text>
+        <Text style={styles.saveText}>{editingFlight ? "Update Flight" : "Add Flight"}</Text>
       </TouchableOpacity>
 
       {/* Flight List */}
@@ -232,34 +156,18 @@ export default function AdminFlightsScreen() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            {item.imageUri && (
-              <Image source={{ uri: item.imageUri }} style={styles.flightImage} />
-            )}
-            <Text style={styles.cardText}>
-              {item.flightNumber} | {item.airline}
-            </Text>
-            <Text style={styles.cardSub}>
-              {item.departure} → {item.arrival}
-            </Text>
-            <Text style={styles.cardSub}>
-              {item.date} at {item.time}
-            </Text>
-            <Text style={styles.cardSub}>${item.price}</Text>
-            <Text style={styles.cardSub}>
-              {item.isFirstClass ? "First Class" : "Economy"}
-            </Text>
+            {item.imageUrl && <Image source={{ uri: item.imageUrl }} style={styles.flightImage} />}
+            <Text style={styles.cardText}>{item.flightNumber} • {item.airline}</Text>
+            <Text style={styles.cardSub}>{item.departure} → {item.arrival}</Text>
+            <Text style={styles.cardSub}>{item.date} at {item.time}</Text>
+            <Text style={styles.cardSub}>${item.price.toFixed(2)}</Text>
+            <Text style={styles.cardSub}>{item.isFirstClass ? "First Class" : "Economy"}</Text>
 
             <View style={styles.cardActions}>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => handleEdit(item)}
-              >
+              <TouchableOpacity style={styles.editButton} onPress={() => handleEdit(item)}>
                 <Text style={styles.actionText}>Edit</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDelete(item.id)}
-              >
+              <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
                 <Text style={styles.actionText}>Delete</Text>
               </TouchableOpacity>
             </View>
