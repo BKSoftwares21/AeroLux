@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     padding: 8,
   },
-  picker: { color: "#fff" },
+  picker: { color: "#0A1A2F" },
   saveButton: {
     backgroundColor: "#FFD700",
     paddingVertical: 14,

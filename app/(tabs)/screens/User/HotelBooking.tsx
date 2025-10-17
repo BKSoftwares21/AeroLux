@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import React from "react";
 import {
   Image,
@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 
-export default function HotelDetailsScreen({ route }: any) {
+export default function HotelBookingScreen({ route }: any) {
   const { hotel } = route?.params || {
     hotel: {
       name: "Ocean View Resort",
@@ -25,16 +25,20 @@ export default function HotelDetailsScreen({ route }: any) {
   const handleBook = () => {
     router.push({
       pathname: "../screens/User/PaymentScreen",
-      params: { hotelName: hotel.name, price: hotel.pricePerNight },
+      params: {
+        bookingType: "Hotel",
+        name: hotel.name,
+        details: `${hotel.location} - ${hotel.bedType} Bed`,
+        price: hotel.pricePerNight,
+      },
     });
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Header */}
+      <Stack.Screen options={{ headerShown: false }} />
       <Text style={styles.header}>Hotel Details</Text>
 
-      {/* Hotel Card */}
       <View style={styles.card}>
         <Image
           source={
@@ -69,14 +73,13 @@ export default function HotelDetailsScreen({ route }: any) {
           <Text style={styles.price}>${hotel.pricePerNight}</Text>
         </View>
 
-        {/* Buttons */}
         <TouchableOpacity style={styles.bookButton} onPress={handleBook}>
           <Text style={styles.bookText}>Book Now</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.push("../screens/User/SearchScreen")}
+          onPress={() => router.push('/screens/User/SearchScreen')}
         >
           <Text style={styles.backText}>Back to Search</Text>
         </TouchableOpacity>
