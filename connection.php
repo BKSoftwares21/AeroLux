@@ -2,12 +2,12 @@
 declare(strict_types=1);
 
 $host = getenv('DB_HOST') ?: '127.0.0.1';
-$port = getenv('DB_PORT') ?: '5432';
+$port = getenv('DB_PORT') ?: '3306';          // XAMPP MySQL port
 $dbName = getenv('DB_NAME') ?: 'aerolux';
-$username = getenv('DB_USER') ?: 'postgres';
-$password = getenv('DB_PASS') ?: '';
+$username = getenv('DB_USER') ?: 'root';      // XAMPP default
+$password = getenv('DB_PASS') ?: '';          // XAMPP default empty
 
-$dsn = "pgsql:host={$host};port={$port};dbname={$dbName};";
+$dsn = "mysql:host={$host};port={$port};dbname={$dbName};charset=utf8mb4";
 
 $options = [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
