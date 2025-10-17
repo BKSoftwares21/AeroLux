@@ -38,20 +38,50 @@ export default function Bookings() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text>User: {item.userId}</Text>
-            <Text>Type: {item.type}</Text>
-            <Text>Reference: {item.reference}</Text>
-            <Text>Status: {item.status}</Text>
+            <Text style={styles.cardTitle}>
+              {item.type === "FLIGHT" ? "✈️ Flight" : "🏨 Hotel"} Booking
+            </Text>
+
+            <Text style={styles.text}>
+              <Text style={styles.label}>User:</Text> {item.userId}
+            </Text>
+            <Text style={styles.text}>
+              <Text style={styles.label}>Type:</Text> {item.type}
+            </Text>
+            <Text style={styles.text}>
+              <Text style={styles.label}>Reference:</Text> {item.reference}
+            </Text>
+            <Text
+              style={[
+                styles.status,
+                item.status === "CONFIRMED"
+                  ? styles.statusConfirmed
+                  : item.status === "CANCELLED"
+                  ? styles.statusCancelled
+                  : styles.statusPending,
+              ]}
+            >
+              {item.status}
+            </Text>
 
             <View style={styles.row}>
-              <TouchableOpacity onPress={() => updateBooking(item.id, "CONFIRMED")} style={styles.button}>
-                <Text>Confirm</Text>
+              <TouchableOpacity
+                onPress={() => updateBooking(item.id, "CONFIRMED")}
+                style={[styles.button, { backgroundColor: "#22C55E" }]}
+              >
+                <Text style={styles.actionText}>Confirm</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => updateBooking(item.id, "CANCELLED")} style={styles.button}>
-                <Text>Cancel</Text>
+              <TouchableOpacity
+                onPress={() => updateBooking(item.id, "CANCELLED")}
+                style={[styles.button, { backgroundColor: "#EF4444" }]}
+              >
+                <Text style={styles.actionText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => deleteBooking(item.id)} style={styles.deleteButton}>
-                <Text>Delete</Text>
+              <TouchableOpacity
+                onPress={() => deleteBooking(item.id)}
+                style={[styles.button, styles.deleteButton]}
+              >
+                <Text style={styles.actionText}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -62,10 +92,81 @@ export default function Bookings() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 12 },
-  card: { backgroundColor: "#f9f9f9", padding: 12, marginBottom: 10, borderRadius: 8 },
-  row: { flexDirection: "row", marginTop: 8, justifyContent: "space-between" },
-  button: { backgroundColor: "#ddd", padding: 8, borderRadius: 5 },
-  deleteButton: { backgroundColor: "#f88", padding: 8, borderRadius: 5 },
+  container: {
+    flex: 1,
+    backgroundColor: "#0A1A2F",
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFD700",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  card: {
+    backgroundColor: "#1C2A44",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFD700",
+    marginBottom: 10,
+  },
+  text: {
+    color: "#fff",
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  label: {
+    color: "#FFD700",
+    fontWeight: "bold",
+  },
+  status: {
+    marginTop: 8,
+    alignSelf: "flex-start",
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    fontWeight: "bold",
+    fontSize: 13,
+  },
+  statusConfirmed: {
+    backgroundColor: "#22C55E",
+    color: "#fff",
+  },
+  statusCancelled: {
+    backgroundColor: "#EF4444",
+    color: "#fff",
+  },
+  statusPending: {
+    backgroundColor: "#FACC15",
+    color: "#0A1A2F",
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 12,
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 4,
+  },
+  actionText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  deleteButton: {
+    backgroundColor: "#B91C1C",
+  },
 });
