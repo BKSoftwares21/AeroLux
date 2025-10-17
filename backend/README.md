@@ -1,307 +1,184 @@
 # AeroLux Backend API
 
-A comprehensive backend API for the AeroLux travel booking application built with Node.js, Express.js, TypeScript, and MongoDB.
+A comprehensive travel booking API built with Node.js, Express, TypeScript, and Prisma with PostgreSQL.
 
-## Features
+## 🚀 Quick Start
 
-- **User Authentication & Authorization**
-  - User registration and login
-  - JWT-based authentication
-  - Password reset functionality
-  - Role-based access control (User/Admin)
+### Prerequisites
 
-- **Flight Management**
-  - Search and filter flights
-  - CRUD operations for flights (Admin)
-  - Real-time seat availability
-  - Flight statistics and analytics
-
-- **Hotel Management**
-  - Search and filter hotels
-  - CRUD operations for hotels (Admin)
-  - Hotel ratings and amenities
-  - Location-based search
-
-- **Booking System**
-  - Create and manage bookings
-  - Booking status tracking
-  - Cancellation and refunds
-  - Booking history
-
-- **Payment Processing**
-  - Secure payment processing
-  - Multiple payment methods
-  - Transaction tracking
-  - Refund management
-
-- **Admin Dashboard**
-  - User management
-  - Content management
-  - Analytics and reporting
-  - System statistics
-
-## Tech Stack
-
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Language**: TypeScript
-- **Database**: MongoDB with Mongoose
-- **Authentication**: JWT (JSON Web Tokens)
-- **Validation**: Joi and Express Validator
-- **Security**: Helmet, CORS, Rate Limiting
-- **Email**: Nodemailer
-- **File Upload**: Multer (with Cloudinary support)
-
-## Prerequisites
-
-- Node.js (v18 or higher)
-- MongoDB (v5 or higher)
+- Node.js (>= 18.0.0)
 - npm or yarn
+- PostgreSQL database (or use the provided Prisma Accelerate URL)
 
-## Installation
+### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd backend
-   ```
-
-2. **Install dependencies**
+1. **Install dependencies:**
    ```bash
    npm install
    ```
 
-3. **Environment Setup**
+2. **Set up environment variables:**
+   The `.env` file is already configured with the DATABASE_URL for Prisma Accelerate.
+
+3. **Set up the database:**
    ```bash
-   cp .env.example .env
-   ```
+   # Run the setup script
+   ./scripts/setup-db.sh
    
-   Update the `.env` file with your configuration:
-   ```env
-   PORT=5000
-   NODE_ENV=development
-   MONGODB_URI=mongodb://localhost:27017/aerolux
-   JWT_SECRET=your-super-secret-jwt-key
-   JWT_EXPIRE=7d
-   EMAIL_HOST=smtp.gmail.com
-   EMAIL_PORT=587
-   EMAIL_USER=your-email@gmail.com
-   EMAIL_PASS=your-app-password
+   # Or manually:
+   npx prisma generate
+   npx prisma db push
+   npm run seed:dev
    ```
 
-4. **Start the development server**
+4. **Start the development server:**
    ```bash
    npm run dev
    ```
 
-5. **Build for production**
-   ```bash
-   npm run build
-   npm start
-   ```
+The API will be available at `http://localhost:5000`
 
-## API Documentation
+## 📚 API Documentation
 
-### Base URL
-```
-http://localhost:5000/api
-```
+### Health Check
+- **GET** `/health` - Check API status
 
-### Authentication Endpoints
+### Authentication
+- **POST** `/api/auth/register` - Register new user
+- **POST** `/api/auth/login` - Login user
+- **POST** `/api/auth/logout` - Logout user
+- **POST** `/api/auth/forgot-password` - Request password reset
+- **POST** `/api/auth/reset-password` - Reset password
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| POST | `/auth/register` | Register new user | Public |
-| POST | `/auth/login` | User login | Public |
-| GET | `/auth/me` | Get current user | Private |
-| POST | `/auth/forgot-password` | Request password reset | Public |
-| POST | `/auth/reset-password` | Reset password | Public |
-| PUT | `/auth/update-password` | Update password | Private |
+### Users
+- **GET** `/api/users/profile` - Get user profile
+- **PUT** `/api/users/profile` - Update user profile
+- **DELETE** `/api/users/profile` - Delete user account
 
-### User Endpoints
+### Flights
+- **GET** `/api/flights` - Get all flights (with search/filter)
+- **GET** `/api/flights/:id` - Get flight by ID
+- **POST** `/api/flights` - Create new flight (admin only)
+- **PUT** `/api/flights/:id` - Update flight (admin only)
+- **DELETE** `/api/flights/:id` - Delete flight (admin only)
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| GET | `/users` | Get all users | Admin |
-| GET | `/users/:id` | Get user by ID | Private |
-| PUT | `/users/profile` | Update profile | Private |
-| PUT | `/users/:id` | Update user | Admin |
-| DELETE | `/users/:id` | Delete user | Admin |
-| GET | `/users/stats` | Get user statistics | Admin |
+### Hotels
+- **GET** `/api/hotels` - Get all hotels (with search/filter)
+- **GET** `/api/hotels/:id` - Get hotel by ID
+- **POST** `/api/hotels` - Create new hotel (admin only)
+- **PUT** `/api/hotels/:id` - Update hotel (admin only)
+- **DELETE** `/api/hotels/:id` - Delete hotel (admin only)
 
-### Flight Endpoints
+### Bookings
+- **GET** `/api/bookings` - Get user bookings
+- **GET** `/api/bookings/:id` - Get booking by ID
+- **POST** `/api/bookings` - Create new booking
+- **PUT** `/api/bookings/:id` - Update booking
+- **DELETE** `/api/bookings/:id` - Cancel booking
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| GET | `/flights` | Get all flights | Public |
-| GET | `/flights/search` | Search flights | Public |
-| GET | `/flights/:id` | Get flight by ID | Public |
-| POST | `/flights` | Create flight | Admin |
-| PUT | `/flights/:id` | Update flight | Admin |
-| DELETE | `/flights/:id` | Delete flight | Admin |
-| GET | `/flights/stats` | Get flight statistics | Admin |
+### Payments
+- **GET** `/api/payments` - Get user payments
+- **GET** `/api/payments/:id` - Get payment by ID
+- **POST** `/api/payments` - Process payment
+- **POST** `/api/payments/:id/refund` - Process refund
 
-### Hotel Endpoints
+## 🛠️ Available Scripts
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| GET | `/hotels` | Get all hotels | Public |
-| GET | `/hotels/search` | Search hotels | Public |
-| GET | `/hotels/:id` | Get hotel by ID | Public |
-| POST | `/hotels` | Create hotel | Admin |
-| PUT | `/hotels/:id` | Update hotel | Admin |
-| DELETE | `/hotels/:id` | Delete hotel | Admin |
-| GET | `/hotels/stats` | Get hotel statistics | Admin |
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run lint:fix` - Fix ESLint errors
+- `npm test` - Run tests
+- `npm run seed` - Seed database with sample data
+- `npm run db:generate` - Generate Prisma client
+- `npm run db:push` - Push schema to database
+- `npm run db:migrate` - Run database migrations
+- `npm run db:studio` - Open Prisma Studio
 
-### Booking Endpoints
+## 🗄️ Database Schema
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| POST | `/bookings` | Create booking | Private |
-| GET | `/bookings` | Get user bookings | Private |
-| GET | `/bookings/:id` | Get booking by ID | Private |
-| PUT | `/bookings/:id/status` | Update booking status | Private |
-| PUT | `/bookings/:id/cancel` | Cancel booking | Private |
-| GET | `/bookings/admin/all` | Get all bookings | Admin |
-| GET | `/bookings/stats` | Get booking statistics | Admin |
+The application uses PostgreSQL with Prisma ORM. Key models include:
 
-### Payment Endpoints
+- **User** - User accounts and authentication
+- **Flight** - Flight information and availability
+- **Hotel** - Hotel information and availability
+- **Booking** - User bookings for flights and hotels
+- **Payment** - Payment transactions
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| POST | `/payments` | Process payment | Private |
-| GET | `/payments` | Get user payments | Private |
-| GET | `/payments/:id` | Get payment by ID | Private |
-| POST | `/payments/:id/refund` | Refund payment | Private |
-| GET | `/payments/stats` | Get payment statistics | Admin |
+## 🔧 Environment Variables
 
-## Request/Response Format
+```env
+# Database
+DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=..."
 
-### Success Response
-```json
-{
-  "success": true,
-  "message": "Operation completed successfully",
-  "data": { ... },
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "total": 100,
-    "pages": 10
-  }
-}
+# JWT
+JWT_SECRET="your-super-secret-jwt-key"
+JWT_EXPIRES_IN="7d"
+
+# Server
+PORT=5000
+NODE_ENV="development"
+
+# Email (optional)
+EMAIL_HOST="smtp.gmail.com"
+EMAIL_PORT=587
+EMAIL_USER="your-email@gmail.com"
+EMAIL_PASS="your-app-password"
+
+# Cloudinary (optional)
+CLOUDINARY_CLOUD_NAME="your-cloud-name"
+CLOUDINARY_API_KEY="your-api-key"
+CLOUDINARY_API_SECRET="your-api-secret"
 ```
 
-### Error Response
-```json
-{
-  "success": false,
-  "message": "Error description",
-  "error": "Detailed error information"
-}
-```
+## 🔐 Authentication
 
-## Authentication
-
-The API uses JWT (JSON Web Tokens) for authentication. Include the token in the Authorization header:
+The API uses JWT tokens for authentication. Include the token in the Authorization header:
 
 ```
 Authorization: Bearer <your-jwt-token>
 ```
 
-## Rate Limiting
+## 📊 Database Management
 
-The API implements rate limiting to prevent abuse:
-- 100 requests per 15 minutes per IP address
-- Custom limits can be configured in the environment variables
-
-## Error Handling
-
-The API includes comprehensive error handling:
-- Validation errors
-- Authentication errors
-- Database errors
-- Custom business logic errors
-
-## Database Models
-
-### User
-- Personal information (name, email, phone, DOB)
-- Authentication data (password, tokens)
-- Role-based access control
-
-### Flight
-- Flight details (number, airline, routes)
-- Pricing and availability
-- Class and seat information
-
-### Hotel
-- Hotel information (name, location, amenities)
-- Pricing and ratings
-- Room types and availability
-
-### Booking
-- User and service references
-- Booking status and payment information
-- Dates and passenger details
-
-### Payment
-- Transaction details
-- Payment method and status
-- Security and validation
-
-## Development
-
-### Scripts
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build TypeScript to JavaScript
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint errors
-- `npm test` - Run tests
-
-### Project Structure
-```
-backend/
-├── src/
-│   ├── config/          # Database and configuration
-│   ├── controllers/     # Route controllers
-│   ├── middleware/      # Custom middleware
-│   ├── models/          # Database models
-│   ├── routes/          # API routes
-│   ├── types/           # TypeScript type definitions
-│   ├── utils/           # Utility functions
-│   └── server.ts        # Main server file
-├── uploads/             # File uploads directory
-├── .env.example         # Environment variables template
-├── .gitignore          # Git ignore rules
-├── package.json        # Dependencies and scripts
-├── tsconfig.json       # TypeScript configuration
-└── README.md           # This file
+### Prisma Studio
+View and edit your data with Prisma Studio:
+```bash
+npm run db:studio
 ```
 
-## Security Features
+### Database Migrations
+```bash
+# Create a new migration
+npm run db:migrate
 
-- Password hashing with bcrypt
-- JWT token authentication
-- Rate limiting
-- CORS protection
-- Helmet security headers
-- Input validation and sanitization
-- SQL injection prevention (MongoDB)
+# Apply migrations
+npx prisma migrate deploy
+```
 
-## Contributing
+## 🚀 Deployment
+
+1. Build the application:
+   ```bash
+   npm run build
+   ```
+
+2. Set production environment variables
+
+3. Start the production server:
+   ```bash
+   npm start
+   ```
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
+4. Run tests and linting
 5. Submit a pull request
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License.
-
-## Support
-
-For support and questions, please contact the development team or create an issue in the repository.

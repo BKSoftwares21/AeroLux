@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 
 import connectDB from './config/database';
 import { errorHandler, notFound } from './middleware/errorHandler';
+import initializePrisma from './utils/prismaInit';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -24,6 +25,9 @@ const app = express();
 
 // Connect to database
 connectDB();
+
+// Initialize Prisma and create default data
+initializePrisma();
 
 // Security middleware
 app.use(helmet());

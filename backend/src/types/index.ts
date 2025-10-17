@@ -1,109 +1,103 @@
 import { Request } from 'express';
-import { Document } from 'mongoose';
+import { User, Flight, Hotel, Booking, Payment, Role, FlightClass, BookingType, BookingStatus, PaymentStatus, PaymentMethod } from '@prisma/client';
 
 // User Types
-export interface IUser extends Document {
-  _id: string;
+export interface IUser extends Omit<User, 'password'> {
+  id: string;
   name: string;
   email: string;
-  password: string;
-  phone?: string;
-  dateOfBirth?: Date;
-  idOrPassport?: string;
-  role: 'user' | 'admin';
+  phone?: string | null;
+  dateOfBirth?: Date | null;
+  idOrPassport?: string | null;
+  role: Role;
   isEmailVerified: boolean;
-  emailVerificationToken?: string;
-  passwordResetToken?: string;
-  passwordResetExpires?: Date;
+  emailVerificationToken?: string | null;
+  passwordResetToken?: string | null;
+  passwordResetExpires?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
+export interface IUserWithPassword extends User {
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
 // Flight Types
-export interface IFlight extends Document {
-  _id: string;
+export interface IFlight extends Flight {
+  id: string;
   flightNumber: string;
   airline: string;
-  departure: {
-    city: string;
-    airport: string;
-    code: string;
-  };
-  arrival: {
-    city: string;
-    airport: string;
-    code: string;
-  };
+  departureCity: string;
+  departureAirport: string;
+  departureCode: string;
+  arrivalCity: string;
+  arrivalAirport: string;
+  arrivalCode: string;
   date: Date;
   time: string;
   duration: number; // in minutes
   price: number;
-  class: 'economy' | 'business' | 'first';
+  class: FlightClass;
   availableSeats: number;
   totalSeats: number;
-  imageUrl?: string;
+  imageUrl?: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 // Hotel Types
-export interface IHotel extends Document {
-  _id: string;
+export interface IHotel extends Hotel {
+  id: string;
   name: string;
-  location: {
-    city: string;
-    country: string;
-    address: string;
-  };
+  city: string;
+  country: string;
+  address: string;
   description: string;
   pricePerNight: number;
   rating: number;
   amenities: string[];
   bedType: string;
   roomType: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 // Booking Types
-export interface IBooking extends Document {
-  _id: string;
-  user: string; // User ID
-  type: 'flight' | 'hotel';
-  flight?: string; // Flight ID
-  hotel?: string; // Hotel ID
-  checkInDate?: Date;
-  checkOutDate?: Date;
-  passengers?: number;
-  rooms?: number;
+export interface IBooking extends Booking {
+  id: string;
+  userId: string;
+  type: BookingType;
+  flightId?: string | null;
+  hotelId?: string | null;
+  checkInDate?: Date | null;
+  checkOutDate?: Date | null;
+  passengers?: number | null;
+  rooms?: number | null;
   totalAmount: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
-  paymentId?: string;
+  status: BookingStatus;
+  paymentStatus: PaymentStatus;
+  paymentId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 // Payment Types
-export interface IPayment extends Document {
-  _id: string;
-  booking: string; // Booking ID
-  user: string; // User ID
+export interface IPayment extends Payment {
+  id: string;
+  bookingId: string;
+  userId: string;
   amount: number;
   currency: string;
-  paymentMethod: 'card' | 'bank_transfer' | 'wallet';
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
-  transactionId?: string;
-  paymentDetails?: {
-    cardNumber?: string;
-    expiryDate?: string;
-    cvv?: string;
-    cardHolderName?: string;
-  };
+  paymentMethod: PaymentMethod;
+  status: PaymentStatus;
+  transactionId?: string | null;
+  cardNumber?: string | null;
+  expiryDate?: string | null;
+  cardHolderName?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -112,6 +106,9 @@ export interface IPayment extends Document {
 export interface AuthRequest extends Request {
   user?: IUser;
 }
+
+// Re-export Prisma types for convenience
+export type { Role, FlightClass, BookingType, BookingStatus, PaymentStatus, PaymentMethod };
 
 // API Response Types
 export interface ApiResponse<T = any> {
