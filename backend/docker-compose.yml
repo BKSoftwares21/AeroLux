@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:5.0
+    container_name: aerolux-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: aerolux
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - aerolux-network
+
+  backend:
+    build: .
+    container_name: aerolux-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/aerolux?authSource=admin
+      JWT_SECRET: your-super-secret-jwt-key-here
+      JWT_EXPIRE: 7d
+      CORS_ORIGIN: http://localhost:3000,http://localhost:8081
+    depends_on:
+      - mongodb
+    networks:
+      - aerolux-network
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  mongodb_data:
+
+networks:
+  aerolux-network:
+    driver: bridge
