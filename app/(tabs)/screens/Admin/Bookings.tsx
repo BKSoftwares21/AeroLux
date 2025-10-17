@@ -3,8 +3,6 @@ import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 
-import AdminLayout from "../../../../components/AdminLayout";
-
 export default function Bookings() {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
@@ -32,8 +30,9 @@ export default function Bookings() {
   };
 
   return (
-    <AdminLayout>
     <View style={styles.container}>
+      
+      <Text style={styles.title}>Manage Bookings</Text>
 
       <FlatList
         data={bookings}
@@ -90,7 +89,6 @@ export default function Bookings() {
         )}
       />
     </View>
-    </AdminLayout>
   );
 }
 
@@ -100,7 +98,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#0A1A2F",
     padding: 20,
   },
-  // title hidden across admin pages (handled by global layout)
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFD700",
+    marginBottom: 20,
+    textAlign: "center",
+  },
   card: {
     backgroundColor: "#1C2A44",
     padding: 15,
