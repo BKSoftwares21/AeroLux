@@ -1,0 +1,193 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String    @id @default(cuid())
+  name                    String    @db.VarChar(50)
+  email                   String    @unique @db.VarChar(255)
+  password                String    @db.VarChar(255)
+  phone                   String?   @db.VarChar(20)
+  dateOfBirth             DateTime? @db.Date
+  idOrPassport            String?   @db.VarChar(20)
+  role                    Role      @default(USER)
+  isEmailVerified         Boolean   @default(false)
+  emailVerificationToken  String?   @db.VarChar(255)
+  passwordResetToken      String?   @db.VarChar(255)
+  passwordResetExpires    DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  // Relations
+  bookings                Booking[]
+  payments                Payment[]
+
+  @@map("users")
+  @@index([email])
+  @@index([role])
+}
+
+model Flight {
+  id            String    @id @default(cuid())
+  flightNumber  String    @unique @db.VarChar(10)
+  airline       String    @db.VarChar(100)
+  departureCity String    @db.VarChar(100)
+  departureAirport String @db.VarChar(100)
+  departureCode String    @db.VarChar(3)
+  arrivalCity   String    @db.VarChar(100)
+  arrivalAirport String   @db.VarChar(100)
+  arrivalCode   String    @db.VarChar(3)
+  date          DateTime  @db.Date
+  time          String    @db.VarChar(5)
+  duration      Int       // in minutes
+  price         Decimal   @db.Decimal(10, 2)
+  class         FlightClass @default(ECONOMY)
+  availableSeats Int
+  totalSeats    Int
+  imageUrl      String?   @db.VarChar(500)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  bookings      Booking[]
+
+  @@map("flights")
+  @@index([departureCode, arrivalCode])
+  @@index([date])
+  @@index([price])
+  @@index([isActive])
+  @@index([flightNumber])
+}
+
+model Hotel {
+  id            String    @id @default(cuid())
+  name          String    @db.VarChar(100)
+  city          String    @db.VarChar(100)
+  country       String    @db.VarChar(100)
+  address       String    @db.VarChar(200)
+  description   String    @db.VarChar(1000)
+  pricePerNight Decimal   @db.Decimal(10, 2)
+  rating        Decimal   @db.Decimal(2, 1) // 1.0 to 5.0
+  amenities     String[]  @default([])
+  bedType       String    @db.VarChar(50)
+  roomType      String    @db.VarChar(50)
+  imageUrl      String?   @db.VarChar(500)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  bookings      Booking[]
+
+  @@map("hotels")
+  @@index([city])
+  @@index([country])
+  @@index([pricePerNight])
+  @@index([rating])
+  @@index([isActive])
+  @@index([name, description], type: Gin)
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  userId        String
+  type          BookingType
+  flightId      String?
+  hotelId       String?
+  checkInDate   DateTime?     @db.Date
+  checkOutDate  DateTime?     @db.Date
+  passengers    Int?
+  rooms         Int?
+  totalAmount   Decimal       @db.Decimal(10, 2)
+  status        BookingStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentId     String?       @db.VarChar(255)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flight        Flight?       @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  hotel         Hotel?        @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  payments      Payment[]
+
+  @@map("bookings")
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  bookingId         String
+  userId            String
+  amount            Decimal       @db.Decimal(10, 2)
+  currency          String        @default("USD") @db.VarChar(3)
+  paymentMethod     PaymentMethod
+  status            PaymentStatus @default(PENDING)
+  transactionId     String?       @unique @db.VarChar(255)
+  cardNumber        String?       @db.VarChar(20)
+  expiryDate        String?       @db.VarChar(5)
+  cardHolderName    String?       @db.VarChar(50)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relations
+  booking           Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+  @@index([bookingId])
+  @@index([userId])
+  @@index([status])
+  @@index([transactionId])
+  @@index([createdAt])
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+}
+
+enum FlightClass {
+  ECONOMY
+  BUSINESS
+  FIRST
+}
+
+enum BookingType {
+  FLIGHT
+  HOTEL
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+  WALLET
+}
