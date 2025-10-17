@@ -22,6 +22,8 @@ interface Payment {
   };
 }
 
+import AdminLayout from "../../../../components/AdminLayout";
+
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
 
@@ -69,8 +71,8 @@ export default function PaymentsPage() {
   };
 
   return (
+    <AdminLayout>
     <View style={styles.container}>
-      <Text style={styles.title}>Manage Payments</Text>
 
       <FlatList
         data={payments}
@@ -140,6 +142,7 @@ export default function PaymentsPage() {
         )}
       />
     </View>
+    </AdminLayout>
   );
 }
 
@@ -149,13 +152,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0A1A2F",
     padding: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFD700",
-    marginBottom: 20,
-    textAlign: "center",
-  },
+  // title hidden across admin pages (handled by global layout)
   card: {
     backgroundColor: "#1C2A44",
     padding: 15,

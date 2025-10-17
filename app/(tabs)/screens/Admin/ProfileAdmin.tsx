@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import AdminLayout from "../../../../components/AdminLayout";
 
 export default function ProfileAdmin() {
   const [name, setName] = useState("Admin User");
@@ -14,9 +15,9 @@ export default function ProfileAdmin() {
   };
 
   return (
+    <AdminLayout>
     <View style={styles.container}>
-      {/* Header */}
-      <Text style={styles.header}>Admin Profile</Text>
+      {/* Header removed: global admin layout used across pages */}
 
       {/* Profile Image */}
       <View style={styles.imageContainer}>
@@ -75,6 +76,7 @@ export default function ProfileAdmin() {
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
     </View>
+    </AdminLayout>
   );
 }
 
@@ -84,13 +86,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0A1A2F",
     padding: 20,
   },
-  header: {
-    color: "#FFD700",
-    fontSize: 28,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 20,
-  },
+  // header hidden across admin pages (handled by global layout)
   imageContainer: {
     alignItems: "center",
     position: "relative",

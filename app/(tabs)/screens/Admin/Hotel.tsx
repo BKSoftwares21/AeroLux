@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AdminLayout from "../../../../components/AdminLayout";
 
 interface Hotel {
   id: number;
@@ -127,8 +128,8 @@ export default function AdminHotelsScreen() {
   };
 
   return (
+    <AdminLayout>
     <View style={styles.container}>
-      <Text style={styles.header}>🏨 Manage Hotels</Text>
 
       {/* Image Picker */}
       <TouchableOpacity style={styles.imagePicker} onPress={handlePickImage}>
@@ -233,18 +234,13 @@ export default function AdminHotelsScreen() {
         )}
       />
     </View>
+    </AdminLayout>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0A1A2F", padding: 20 },
-  header: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFD700",
-    marginBottom: 20,
-    textAlign: "center",
-  },
+  // header hidden across admin pages (handled by global layout)
   imagePicker: { alignItems: "center", marginBottom: 15 },
   imagePickerText: {
     color: "#FFD700",
