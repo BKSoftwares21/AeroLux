@@ -1,11 +1,8 @@
 // screens/Admin/AdminUsersScreen.tsx
-import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Stack } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   FlatList,
-  Image,
   Modal,
   Platform,
   StyleSheet,
@@ -14,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AdminLayout from "../../../../components/AdminLayout";
 
 type User = {
   id: string;
@@ -127,18 +125,9 @@ export default function Users() {
   };
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.topNav}>
-        <Image
-          source={require('../../../../assets/images/logo.png')}
-          style={styles.logo}
-        />
-        <Text style={styles.appName}>Aerolux</Text>
-        <Ionicons name="menu" size={28} color="#D4AF37" />
-      </View>
-
-      <FlatList
+    <AdminLayout>
+      <View style={styles.container}>
+        <FlatList
         data={users}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
@@ -158,145 +147,132 @@ export default function Users() {
             </View>
           </View>
         )}
-      />
+        />
 
-      {/* Add User Button */}
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => {
-          setEditingUser(null);
-          setName("");
-          setEmail("");
-          setPhone("");
-          setDob(undefined);
-          setIdOrPassport("");
-          setRole("user");
-          setModalVisible(true);
-        }}
-      >
-        <Text style={styles.addText}>+ Add User</Text>
-      </TouchableOpacity>
+        {/* Add User Button */}
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => {
+            setEditingUser(null);
+            setName("");
+            setEmail("");
+            setPhone("");
+            setDob(undefined);
+            setIdOrPassport("");
+            setRole("user");
+            setModalVisible(true);
+          }}
+        >
+          <Text style={styles.addText}>+ Add User</Text>
+        </TouchableOpacity>
 
-      {/* Modal for Create/Update */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {editingUser ? "Edit User" : "Add User"}
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Name"
-              placeholderTextColor="#aaa"
-              value={name}
-              onChangeText={setName}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#aaa"
-              value={email}
-              onChangeText={setEmail}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Phone Number"
-              placeholderTextColor="#aaa"
-              value={phone}
-              onChangeText={setPhone}
-            />
-            {/* Date of Birth */}
-            {Platform.OS === "web" ? (
+        {/* Modal for Create/Update */}
+        <Modal visible={modalVisible} animationType="slide" transparent>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>
+                {editingUser ? "Edit User" : "Add User"}
+              </Text>
               <TextInput
                 style={styles.input}
-                placeholder="Date of Birth (YYYY-MM-DD)"
+                placeholder="Name"
                 placeholderTextColor="#aaa"
-                value={dob ? dob.toISOString().slice(0, 10) : ""}
-                onChangeText={text => {
-                  const parsed = new Date(text);
-                  if (!isNaN(parsed.getTime())) setDob(parsed);
-                }}
+                value={name}
+                onChangeText={setName}
               />
-            ) : (
-              <>
-                <TouchableOpacity
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor="#aaa"
+                value={email}
+                onChangeText={setEmail}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Phone Number"
+                placeholderTextColor="#aaa"
+                value={phone}
+                onChangeText={setPhone}
+              />
+              {/* Date of Birth */}
+              {Platform.OS === "web" ? (
+                <TextInput
                   style={styles.input}
-                  onPress={() => setShowPicker(true)}
-                  activeOpacity={0.8}
+                  placeholder="Date of Birth (YYYY-MM-DD)"
+                  placeholderTextColor="#aaa"
+                  value={dob ? dob.toISOString().slice(0, 10) : ""}
+                  onChangeText={text => {
+                    const parsed = new Date(text);
+                    if (!isNaN(parsed.getTime())) setDob(parsed);
+                  }}
+                />
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.input}
+                    onPress={() => setShowPicker(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: dob ? "#fff" : "#aaa" }}>
+                      {dob ? dob.toLocaleDateString() : "Date of Birth (Tap to select)"}
+                    </Text>
+                  </TouchableOpacity>
+                  {showPicker && (
+                    <DateTimePicker
+                      value={dob || new Date(2000, 0, 1)}
+                      mode="date"
+                      display="default"
+                      maximumDate={new Date()}
+                      onChange={(event, selectedDate) => {
+                        setShowPicker(false);
+                        if (selectedDate) setDob(selectedDate);
+                      }}
+                    />
+                  )}
+                </>
+              )}
+              <TextInput
+                style={styles.input}
+                placeholder="ID or Passport Number"
+                placeholderTextColor="#aaa"
+                value={idOrPassport}
+                onChangeText={setIdOrPassport}
+              />
+              <View style={styles.roleSwitch}>
+                <TouchableOpacity
+                  style={[styles.roleButton, role === "user" && styles.activeRole]}
+                  onPress={() => setRole("user")}
                 >
-                  <Text style={{ color: dob ? "#fff" : "#aaa" }}>
-                    {dob ? dob.toLocaleDateString() : "Date of Birth (Tap to select)"}
-                  </Text>
+                  <Text style={styles.roleText}>User</Text>
                 </TouchableOpacity>
-                {showPicker && (
-                  <DateTimePicker
-                    value={dob || new Date(2000, 0, 1)}
-                    mode="date"
-                    display="default"
-                    maximumDate={new Date()}
-                    onChange={(event, selectedDate) => {
-                      setShowPicker(false);
-                      if (selectedDate) setDob(selectedDate);
-                    }}
-                  />
-                )}
-              </>
-            )}
-            <TextInput
-              style={styles.input}
-              placeholder="ID or Passport Number"
-              placeholderTextColor="#aaa"
-              value={idOrPassport}
-              onChangeText={setIdOrPassport}
-            />
-            <View style={styles.roleSwitch}>
-              <TouchableOpacity
-                style={[styles.roleButton, role === "user" && styles.activeRole]}
-                onPress={() => setRole("user")}
-              >
-                <Text style={styles.roleText}>User</Text>
+                <TouchableOpacity
+                  style={[styles.roleButton, role === "admin" && styles.activeRole]}
+                  onPress={() => setRole("admin")}
+                >
+                  <Text style={styles.roleText}>Admin</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                <Text style={styles.saveText}>
+                  {editingUser ? "Update" : "Create"}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.roleButton, role === "admin" && styles.activeRole]}
-                onPress={() => setRole("admin")}
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}
               >
-                <Text style={styles.roleText}>Admin</Text>
+                <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.saveText}>
-                {editingUser ? "Update" : "Create"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </AdminLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  topNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-  },
-  logo: {
-    width: 100,
-    height: 100,
-  },
-  appName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
+  // header removed; handled globally in AdminLayout
   container: { flex: 1, padding: 20, backgroundColor: "#0A1A2F" },
   card: {
     backgroundColor: "rgba(255,255,255,0.1)",

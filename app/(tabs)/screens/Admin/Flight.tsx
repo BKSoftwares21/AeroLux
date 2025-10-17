@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AdminLayout from "../../../../components/AdminLayout";
 
 interface Flight {
   id: number;
@@ -109,8 +110,8 @@ export default function AdminFlightsScreen() {
   };
 
   return (
+    <AdminLayout>
     <View style={styles.container}>
-      <Text style={styles.header}>✈️ Manage Flights</Text>
 
       {/* Image Upload */}
       <TouchableOpacity style={styles.imagePicker} onPress={handlePickImage}>
@@ -175,6 +176,7 @@ export default function AdminFlightsScreen() {
         )}
       />
     </View>
+    </AdminLayout>
   );
 }
 
@@ -184,13 +186,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0A1A2F",
     padding: 20,
   },
-  header: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFD700",
-    marginBottom: 20,
-    textAlign: "center",
-  },
+  // header hidden across admin pages (handled by global layout)
   imagePicker: {
     alignItems: "center",
     marginBottom: 15,
