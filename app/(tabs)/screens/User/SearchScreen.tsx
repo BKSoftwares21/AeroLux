@@ -1,18 +1,36 @@
 // screens/Search.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import UserModal from './UserModal';
 export default function Search() {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [query, setQuery] = useState("");
+  const [hotels, setHotels] = useState<any[]>([]);
+  const [flights, setFlights] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    const [modalVisible, setModalVisible] = useState(false);
+  const { http } = require("@/constants/api");
 
-  const data = [
-    { id: "1", name: "Hotel BlueSky", location: "Cape Town" },
-    { id: "2", name: "Safari Lodge", location: "Kruger Park" },
-    { id: "3", name: "City View Apartments", location: "Johannesburg" },
-  ];
+  const runSearch = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await http<{ hotels: any[]; flights: any[] }>(`/search.php?q=${encodeURIComponent(query)}`);
+      setHotels(res.hotels || []);
+      setFlights(res.flights || []);
+    } catch (e: any) {
+      setError(e?.message || "Failed to search");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    runSearch();
+  }, []);
 
   return (
     <> 
@@ -41,17 +59,43 @@ export default function Search() {
           <TextInput
             placeholder="Search hotels, flights, or packages"
             style={styles.input}
+            value={query}
+            onChangeText={setQuery}
+            onSubmitEditing={runSearch}
           />
         </View>
 
-        {/* Results List */}
+        {isLoading ? <Text style={{ color: '#fff' }}>Loading...</Text> : null}
+        {error ? <Text style={{ color: '#ff6b6b' }}>{error}</Text> : null}
+
+        {/* Hotels */}
+        <Text style={[styles.title, { marginTop: 10 }]}>Hotels</Text>
         <FlatList
-          data={data}
-          keyExtractor={(item) => item.id}
+          data={hotels}
+          keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
             <View style={styles.card}>
               <Text style={styles.cardTitle}>{item.name}</Text>
               <Text style={styles.cardSubtitle}>{item.location}</Text>
+              {item.price_per_night ? (
+                <Text style={styles.cardSubtitle}>${Number(item.price_per_night).toFixed(2)} / night</Text>
+              ) : null}
+            </View>
+          )}
+        />
+
+        {/* Flights */}
+        <Text style={[styles.title, { marginTop: 10 }]}>Flights</Text>
+        <FlatList
+          data={flights}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>{item.flight_number} • {item.airline}</Text>
+              <Text style={styles.cardSubtitle}>{item.departure} → {item.arrival}</Text>
+              {item.price ? (
+                <Text style={styles.cardSubtitle}>${Number(item.price).toFixed(2)}</Text>
+              ) : null}
             </View>
           )}
         />

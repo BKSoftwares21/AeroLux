@@ -1,5 +1,5 @@
 import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -26,6 +26,8 @@ interface Flight {
 
 export default function AdminFlightsScreen() {
   const [flights, setFlights] = useState<Flight[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [editingFlight, setEditingFlight] = useState<Flight | null>(null);
 
   const [flightNumber, setFlightNumber] = useState("");
@@ -51,6 +53,39 @@ export default function AdminFlightsScreen() {
     setEditingFlight(null);
   };
 
+  // Backend integration
+  const { http } = require("@/constants/api");
+
+  const mapFlightFromApi = (row: any): Flight => ({
+    id: Number(row.id),
+    flightNumber: row.flight_number ?? row.flightNumber ?? "",
+    airline: row.airline ?? "",
+    departure: row.departure ?? "",
+    arrival: row.arrival ?? "",
+    date: row.departure_date ?? row.date ?? "",
+    time: row.departure_time ?? row.time ?? "",
+    price: Number(row.price ?? 0),
+    imageUrl: row.image_url ?? row.imageUrl ?? undefined,
+    isFirstClass: Boolean(row.is_first_class ?? row.isFirstClass ?? false),
+  });
+
+  const fetchFlights = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const rows = await http<unknown[]>("/flights.php", { method: "GET" });
+      setFlights((rows as any[]).map(mapFlightFromApi));
+    } catch (e: any) {
+      setError(e?.message || "Failed to load flights");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFlights();
+  }, []);
+
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -63,33 +98,25 @@ export default function AdminFlightsScreen() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!flightNumber || !airline || !departure || !arrival || !price) return;
-
-    if (editingFlight) {
-      setFlights((prev) =>
-        prev.map((f) =>
-          f.id === editingFlight.id
-            ? { ...f, flightNumber, airline, departure, arrival, date, time, price: +price, imageUrl, isFirstClass }
-            : f
-        )
-      );
-    } else {
-      const newFlight: Flight = {
-        id: flights.length + 1,
-        flightNumber,
-        airline,
-        departure,
-        arrival,
-        date,
-        time,
-        price: +price,
-        imageUrl,
-        isFirstClass,
-      };
-      setFlights([...flights, newFlight]);
+    try {
+      if (editingFlight) {
+        await http(`/flights.php?id=${editingFlight.id}`, {
+          method: "PUT",
+          body: JSON.stringify({ flightNumber, airline, departure, arrival, date, time, price: +price, imageUrl, isFirstClass }),
+        });
+      } else {
+        await http(`/flights.php`, {
+          method: "POST",
+          body: JSON.stringify({ flightNumber, airline, departure, arrival, date, time, price: +price, imageUrl, isFirstClass }),
+        });
+      }
+      await fetchFlights();
+      resetForm();
+    } catch (e: any) {
+      alert(e?.message || "Failed to save flight");
     }
-    resetForm();
   };
 
   const handleEdit = (flight: Flight) => {
@@ -105,8 +132,13 @@ export default function AdminFlightsScreen() {
     setIsFirstClass(flight.isFirstClass);
   };
 
-  const handleDelete = (id: number) => {
-    setFlights((prev) => prev.filter((f) => f.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      await http(`/flights.php?id=${id}`, { method: "DELETE" });
+      await fetchFlights();
+    } catch (e: any) {
+      alert(e?.message || "Failed to delete flight");
+    }
   };
 
   return (
@@ -150,6 +182,14 @@ export default function AdminFlightsScreen() {
       <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
         <Text style={styles.saveText}>{editingFlight ? "Update Flight" : "Add Flight"}</Text>
       </TouchableOpacity>
+
+      {/* Status */}
+      {isLoading ? (
+        <Text style={{ color: "#fff", marginBottom: 10 }}>Loading...</Text>
+      ) : null}
+      {error ? (
+        <Text style={{ color: "#EF4444", marginBottom: 10 }}>{error}</Text>
+      ) : null}
 
       {/* Flight List */}
       <FlatList

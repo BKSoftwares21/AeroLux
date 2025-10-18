@@ -1,6 +1,6 @@
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -36,6 +36,8 @@ const bedTypes = [
 
 export default function AdminHotelsScreen() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
 
   const [name, setName] = useState("");
@@ -57,6 +59,38 @@ export default function AdminHotelsScreen() {
     setEditingHotel(null);
   };
 
+  // --- Backend integration ---
+  const { http } = require("@/constants/api");
+
+  const mapHotelFromApi = (row: any): Hotel => ({
+    id: Number(row.id),
+    name: row.name,
+    location: row.location,
+    description: row.description ?? "",
+    pricePerNight: Number(row.price_per_night ?? row.pricePerNight ?? 0),
+    rating: Number(row.rating ?? 0),
+    bedType: row.bed_type ?? row.bedType ?? "",
+    imageUrl: row.image_url ?? row.imageUrl ?? undefined,
+  });
+
+  const fetchHotels = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const rows = await http<unknown[]>("/hotels.php", { method: "GET" });
+      const mapped = (rows as any[]).map(mapHotelFromApi);
+      setHotels(mapped);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load hotels");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHotels();
+  }, []);
+
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -70,46 +104,46 @@ export default function AdminHotelsScreen() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !location || !pricePerNight) {
       alert("⚠️ Please fill all required fields.");
       return;
     }
-
-    if (editingHotel) {
-      // Update existing hotel
-      setHotels((prev) =>
-        prev.map((h) =>
-          h.id === editingHotel.id
-            ? {
-                ...h,
-                name,
-                location,
-                description,
-                pricePerNight: Number(pricePerNight),
-                rating: Number(rating),
-                bedType,
-                imageUrl,
-              }
-            : h
-        )
-      );
-    } else {
-      // Add new hotel
-      const newHotel: Hotel = {
-        id: hotels.length + 1,
-        name,
-        location,
-        description,
-        pricePerNight: Number(pricePerNight),
-        rating: Number(rating),
-        bedType,
-        imageUrl,
-      };
-      setHotels([...hotels, newHotel]);
+    try {
+      if (editingHotel) {
+        // Update existing hotel
+        await http(`/hotels.php?id=${editingHotel.id}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            name,
+            location,
+            description,
+            pricePerNight: Number(pricePerNight),
+            rating: Number(rating),
+            bedType,
+            imageUrl,
+          }),
+        });
+      } else {
+        // Create new hotel
+        await http(`/hotels.php`, {
+          method: "POST",
+          body: JSON.stringify({
+            name,
+            location,
+            description,
+            pricePerNight: Number(pricePerNight),
+            rating: Number(rating),
+            bedType,
+            imageUrl,
+          }),
+        });
+      }
+      await fetchHotels();
+      resetForm();
+    } catch (e: any) {
+      alert(e?.message || "Failed to save hotel");
     }
-
-    resetForm();
   };
 
   const handleEdit = (hotel: Hotel) => {
@@ -123,8 +157,13 @@ export default function AdminHotelsScreen() {
     setImageUrl(hotel.imageUrl);
   };
 
-  const handleDelete = (id: number) => {
-    setHotels((prev) => prev.filter((h) => h.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      await http(`/hotels.php?id=${id}`, { method: "DELETE" });
+      await fetchHotels();
+    } catch (e: any) {
+      alert(e?.message || "Failed to delete hotel");
+    }
   };
 
   return (
@@ -198,6 +237,14 @@ export default function AdminHotelsScreen() {
           {editingHotel ? "Update Hotel" : "Add Hotel"}
         </Text>
       </TouchableOpacity>
+
+      {/* Status */}
+      {isLoading ? (
+        <Text style={{ color: "#fff", marginBottom: 10 }}>Loading...</Text>
+      ) : null}
+      {error ? (
+        <Text style={{ color: "#EF4444", marginBottom: 10 }}>{error}</Text>
+      ) : null}
 
       {/* Hotel List */}
       <FlatList

@@ -1,13 +1,22 @@
 <?php
 declare(strict_types=1);
 
+// Choose driver via env, default to MySQL for XAMPP
+$driver = getenv('DB_DRIVER') ?: 'mysql'; // 'mysql' | 'pgsql'
 $host = getenv('DB_HOST') ?: '127.0.0.1';
-$port = getenv('DB_PORT') ?: '5432';
 $dbName = getenv('DB_NAME') ?: 'aerolux';
-$username = getenv('DB_USER') ?: 'postgres';
-$password = getenv('DB_PASS') ?: '';
-
-$dsn = "pgsql:host={$host};port={$port};dbname={$dbName};";
+// Defaults per driver
+if ($driver === 'pgsql') {
+    $port = getenv('DB_PORT') ?: '5432';
+    $username = getenv('DB_USER') ?: 'postgres';
+    $password = getenv('DB_PASS') ?: '';
+    $dsn = "pgsql:host={$host};port={$port};dbname={$dbName};";
+} else { // mysql
+    $port = getenv('DB_PORT') ?: '3306';
+    $username = getenv('DB_USER') ?: 'root';
+    $password = getenv('DB_PASS') ?: '';
+    $dsn = "mysql:host={$host};port={$port};dbname={$dbName};charset=utf8mb4";
+}
 
 $options = [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
