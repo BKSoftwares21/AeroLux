@@ -1,36 +1,21 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Stack } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
-import UserModal from "./UserModal"; // Make sure this path is correct for your project
-
-const bookings = [
-    {
-        id: "1",
-        date: "2025-10-01",
-        amount: 299.99,
-        status: "Completed",
-        description: "Flight to Paris",
-    },
-    {
-        id: "2",
-        date: "2025-09-15",
-        amount: 120.0,
-        status: "Completed",
-        description: "Hotel Booking",
-    },
-    {       id: "3",
-        date: "2025-08-20",
-        amount: 450.5,
-        status: "Cancelled",
-        description: "Flight to New York",
-    },
-];          
+import UserModal from "./UserModal";
+import { bookingsApi, getCurrentUserCached } from "../../../../lib/api";
 export default function BookingHistory() 
 {
     const [modalVisible, setModalVisible] = useState(false);
-    
+    const [bookings, setBookings] = useState<any[]>([]);
+
+    useEffect(() => {
+        const user = getCurrentUserCached();
+        const userId = user?.id;
+        bookingsApi.list(userId).then(setBookings).catch(console.error);
+    }, []);
+
     return (
         <>
             <SafeAreaView style={styles.container}></SafeAreaView>
@@ -49,17 +34,12 @@ export default function BookingHistory()
                 <Text style={styles.title}>Booking History</Text>
                 <FlatList
                     data={bookings}
-
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={(item) => String(item.id)}
                     renderItem={({ item }) => (
                         <View style={styles.card}>                  
                             <View style={styles.row}>
                                 <Text style={styles.label}>Date:</Text>
-                                <Text style={styles.value}>{item.date}</Text>
-                            </View>
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Amount:</Text>
-                                <Text style={styles.value}>${item.amount.toFixed(2)}</Text>
+                                <Text style={styles.value}>{item.date || new Date(item.created_at).toISOString().slice(0,10)}</Text>
                             </View>
                             <View style={styles.row}>
                                 <Text style={styles.label}>Status:</Text>
@@ -67,7 +47,7 @@ export default function BookingHistory()
                             </View>
                             <View style={styles.row}>
                                 <Text style={styles.label}>Description:</Text>
-                                <Text style={styles.value}>{item.description}</Text>
+                                <Text style={styles.value}>{item.reference}</Text>
                             </View>
                         </View>
                     )}

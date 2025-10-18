@@ -12,21 +12,26 @@ export default function Bookings() {
   }, []);
 
   const fetchBookings = async () => {
-    // Replace with API call
-    setBookings([
-      { id: 1, userId: "u1", type: "FLIGHT", reference: "FL123", status: "PENDING" },
-      { id: 2, userId: "u2", type: "HOTEL", reference: "HT456", status: "CONFIRMED" },
-    ]);
+    try {
+      const res = await (await import("../../../../lib/api")).bookingsApi.list();
+      setBookings(res as any);
+    } catch (e) { console.error(e); }
   };
 
   const updateBooking = async (id: number, status: string) => {
-    // Replace with API PUT request
-    setBookings(bookings.map(b => (b.id === id ? { ...b, status } : b)));
+    try {
+      const { bookingsApi } = await import("../../../../lib/api");
+      const updated = await bookingsApi.update(id, { status });
+      setBookings((prev: any[]) => prev.map(b => (b.id === id ? updated : b)));
+    } catch (e) { console.error(e); }
   };
 
   const deleteBooking = async (id: number) => {
-    // Replace with API DELETE request
-    setBookings(bookings.filter(b => b.id !== id));
+    try {
+      const { bookingsApi } = await import("../../../../lib/api");
+      await bookingsApi.delete(id);
+      setBookings((prev: any[]) => prev.filter(b => b.id !== id));
+    } catch (e) { console.error(e); }
   };
 
   return (

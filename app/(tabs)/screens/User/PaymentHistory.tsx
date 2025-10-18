@@ -1,37 +1,22 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import UserModal from "./UserModal"; // Make sure this path is correct for your project
-const payments = [
-  {
-    id: "1",
-    date: "2025-10-01",
-    amount: 299.99,
-    method: "Credit Card",
-    status: "Completed",
-    description: "Flight to Paris",
-  },
-  {
-    id: "2",
-    date: "2025-09-15",
-    amount: 120.0,
-    method: "PayPal",
-    status: "Completed",
-    description: "Hotel Booking",
-  },
-  {
-    id: "3",
-    date: "2025-08-20",
-    amount: 450.5,
-    method: "Debit Card",
-    status: "Refunded",
-    description: "Flight to New York",
-  },
-];
+import UserModal from "./UserModal";
+import { getCurrentUserCached, paymentsApi } from "../../../../lib/api";
 
 export default function PaymentHistory() {
   const [modalVisible, setModalVisible] = useState(false);
+  const [payments, setPayments] = useState<any[]>([]);
+
+  useEffect(() => {
+    const user = getCurrentUserCached();
+    const userId = user?.id;
+    paymentsApi
+      .list(userId)
+      .then(setPayments)
+      .catch((e) => console.error(e));
+  }, []);
 
   return (
     <>
@@ -58,22 +43,22 @@ export default function PaymentHistory() {
             <View style={styles.card}>
               <View style={styles.row}>
                 <Text style={styles.label}>Date:</Text>
-                <Text style={styles.value}>{item.date}</Text>
+                <Text style={styles.value}>{item.date || new Date(item.created_at).toISOString().slice(0,10)}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Amount:</Text>
-                <Text style={styles.value}>${item.amount.toFixed(2)}</Text>
+                <Text style={styles.value}>${Number(item.amount).toFixed(2)}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Method:</Text>
-                <Text style={styles.value}>{item.method}</Text>
+                <Text style={styles.value}>{item.payment_method || item.method}</Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Status:</Text>
                 <Text
                   style={[
                     styles.value,
-                    item.status === "Completed"
+                    (item.status === "PAID" || item.status === "Completed")
                       ? styles.completed
                       : styles.refunded,
                   ]}
@@ -83,7 +68,7 @@ export default function PaymentHistory() {
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Description:</Text>
-                <Text style={styles.value}>{item.description}</Text>
+                <Text style={styles.value}>{item.description || ''}</Text>
               </View>
             </View>
           )}

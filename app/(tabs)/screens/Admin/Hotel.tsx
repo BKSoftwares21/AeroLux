@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import AdminLayout from "../../../../components/AdminLayout";
+import { hotelsApi } from "../../../../lib/api";
 
 interface Hotel {
   id: number;
@@ -70,43 +71,38 @@ export default function AdminHotelsScreen() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !location || !pricePerNight) {
       alert("⚠️ Please fill all required fields.");
       return;
     }
 
     if (editingHotel) {
-      // Update existing hotel
-      setHotels((prev) =>
-        prev.map((h) =>
-          h.id === editingHotel.id
-            ? {
-                ...h,
-                name,
-                location,
-                description,
-                pricePerNight: Number(pricePerNight),
-                rating: Number(rating),
-                bedType,
-                imageUrl,
-              }
-            : h
-        )
-      );
+      try {
+        const updated = await hotelsApi.update(editingHotel.id, {
+          name,
+          location,
+          description,
+          pricePerNight: Number(pricePerNight),
+          rating: Number(rating),
+          bedType,
+          imageUrl,
+        });
+        setHotels((prev) => prev.map((h) => (h.id === editingHotel.id ? updated : h)));
+      } catch (e) { console.error(e); }
     } else {
-      // Add new hotel
-      const newHotel: Hotel = {
-        id: hotels.length + 1,
-        name,
-        location,
-        description,
-        pricePerNight: Number(pricePerNight),
-        rating: Number(rating),
-        bedType,
-        imageUrl,
-      };
-      setHotels([...hotels, newHotel]);
+      try {
+        const created = await hotelsApi.create({
+          name,
+          location,
+          description,
+          pricePerNight: Number(pricePerNight),
+          rating: Number(rating),
+          bedType,
+          imageUrl,
+        });
+        setHotels((prev) => [...prev, created]);
+      } catch (e) { console.error(e); }
     }
 
     resetForm();
@@ -123,9 +119,13 @@ export default function AdminHotelsScreen() {
     setImageUrl(hotel.imageUrl);
   };
 
-  const handleDelete = (id: number) => {
-    setHotels((prev) => prev.filter((h) => h.id !== id));
+  const handleDelete = async (id: number) => {
+    try { await hotelsApi.delete(id); setHotels((prev) => prev.filter((h) => h.id !== id)); } catch (e) { console.error(e); }
   };
+
+  React.useEffect(() => {
+    hotelsApi.list().then(setHotels).catch(console.error);
+  }, []);
 
   return (
     <AdminLayout>

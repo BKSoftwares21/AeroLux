@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
+import { bookingsApi, getCurrentUserCached } from "../../../../lib/api";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Payments() {
@@ -17,9 +18,18 @@ export default function Payments() {
   const [cvv, setCvv] = useState("");
   const [cardName, setCardName] = useState("");
 
-  const handlePayment = () => {
-    alert(`✅ Payment Successful! Your ${type} booking is confirmed.`);
-    router.push("../screens/User/Homescreen");
+  const handlePayment = async () => {
+    try {
+      const user = getCurrentUserCached();
+      const created = await bookingsApi.create({
+        type: (type as string)?.toUpperCase() === 'HOTEL' ? 'HOTEL' : 'FLIGHT',
+        reference: `${(type || 'BOOK')}-${Date.now()}`,
+      });
+      alert(`✅ Payment Successful! Booking #${created.id} confirmed.`);
+      router.push("../screens/User/Homescreen");
+    } catch (e: any) {
+      alert(e.message || 'Payment failed');
+    }
   };
 
   return (

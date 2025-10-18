@@ -1,11 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import UserModal from './UserModal';
 export default function HomeScreen() {
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [userName, setUserName] = useState<string>("User");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { getMe, getCurrentUserCached } = await import('../../../../lib/api');
+        const cached = getCurrentUserCached();
+        if (cached?.name) setUserName(cached.name);
+        const me = await getMe();
+        if (me?.name) setUserName(me.name);
+      } catch {}
+    })();
+  }, []);
 
   return (
     <>
@@ -27,7 +40,7 @@ export default function HomeScreen() {
         
 
         {/* Welcome Message */}
-        <Text style={styles.welcomeText}>Welcome Benita!</Text>
+        <Text style={styles.welcomeText}>Welcome {userName || 'Guest'}!</Text>
 
         {/* Offer Card */}
         <View style={styles.offerCard}>

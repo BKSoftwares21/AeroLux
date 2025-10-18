@@ -23,51 +23,20 @@ interface Payment {
 }
 
 import AdminLayout from "../../../../components/AdminLayout";
+import { paymentsApi } from "../../../../lib/api";
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
 
   useEffect(() => {
-    fetchPayments();
+    paymentsApi.list().then(setPayments).catch(console.error);
   }, []);
 
-  const fetchPayments = async () => {
-    // Replace this with API call
-    setPayments([
-      {
-        id: 1,
-        bookingId: 101,
-        amount: 250,
-        status: "PENDING",
-        paymentMethod: "CARD",
-        bookingType: "FLIGHT",
-        details: {
-          name: "AeroLux Airways",
-          location: "Paris → New York",
-          date: "2025-10-18",
-        },
-      },
-      {
-        id: 2,
-        bookingId: 202,
-        amount: 500,
-        status: "PAID",
-        paymentMethod: "MOBILE_MONEY",
-        bookingType: "HOTEL",
-        details: {
-          name: "Bahamas Resort",
-          location: "Nassau, Bahamas",
-          duration: "5 Days / 4 Nights",
-        },
-      },
-    ]);
-  };
-
   const updatePayment = async (id: number, status: string) => {
-    // Replace with API PUT request later
-    setPayments((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status } : p))
-    );
+    try {
+      const updated = await paymentsApi.update(id, { status });
+      setPayments((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    } catch (e) { console.error(e); }
   };
 
   return (
@@ -79,36 +48,15 @@ export default function PaymentsPage() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            {/* Booking Info */}
-            <Text style={styles.cardTitle}>
-              {item.bookingType === "FLIGHT" ? "✈️ Flight" : "🏨 Hotel"} Booking
+            <Text style={styles.cardTitle}>Payment</Text>
+            <Text style={styles.text}>
+              <Text style={styles.label}>Booking ID:</Text> {item.booking_id}
             </Text>
             <Text style={styles.text}>
-              <Text style={styles.label}>Booking ID:</Text> {item.bookingId}
+              <Text style={styles.label}>Amount:</Text> ${Number(item.amount).toFixed(2)}
             </Text>
             <Text style={styles.text}>
-              <Text style={styles.label}>Name:</Text> {item.details.name}
-            </Text>
-            <Text style={styles.text}>
-              <Text style={styles.label}>Location:</Text> {item.details.location}
-            </Text>
-            {item.details.date && (
-              <Text style={styles.text}>
-                <Text style={styles.label}>Date:</Text> {item.details.date}
-              </Text>
-            )}
-            {item.details.duration && (
-              <Text style={styles.text}>
-                <Text style={styles.label}>Duration:</Text>{" "}
-                {item.details.duration}
-              </Text>
-            )}
-            <Text style={styles.text}>
-              <Text style={styles.label}>Amount:</Text> ${item.amount}
-            </Text>
-            <Text style={styles.text}>
-              <Text style={styles.label}>Payment Method:</Text>{" "}
-              {item.paymentMethod}
+              <Text style={styles.label}>Payment Method:</Text> {item.payment_method || item.paymentMethod}
             </Text>
             <Text
               style={[
@@ -123,7 +71,6 @@ export default function PaymentsPage() {
               {item.status}
             </Text>
 
-            {/* Actions */}
             <View style={styles.row}>
               <TouchableOpacity
                 onPress={() => updatePayment(item.id, "PAID")}

@@ -2,6 +2,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { router, Stack } from "expo-router";
 import React, { useState } from "react";
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { signup } from "../../../../lib/api";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -22,7 +23,7 @@ export default function Signup() {
     return age;
   };
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
       return;
@@ -39,9 +40,12 @@ export default function Signup() {
       alert("Please enter your ID or Passport Number.");
       return;
     }
-    // ...existing code...
-    console.log({ name, email, password, dob: dob?.toISOString(), idOrPassport, role: "user" });
-    router.push("./Homescreen");
+    try {
+      await signup({ name, email, password, dob: dob?.toISOString().slice(0,10), idOrPassport });
+      router.push("./Homescreen");
+    } catch (e: any) {
+      alert(e.message || "Signup failed");
+    }
   };
 
 

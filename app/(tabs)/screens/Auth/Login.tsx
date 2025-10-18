@@ -1,17 +1,25 @@
 import { router, Stack } from "expo-router";
 import React, { useState } from "react";
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { login, setAuthToken, setCurrentUser } from "../../../../lib/api";
 
 export default function Login() {
   const [role, setRole] = useState<"user" | "admin">("user");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    if (role === "user") {
-      router.push("/screens/User/Homescreen");
-    } else if (role === "admin") {
-      router.push("/screens/Admin/AdminDashboardScreen");
+  const handleLogin = async () => {
+    try {
+      const user = await login(email, password);
+      if (user.role === "admin") {
+        router.push("/screens/Admin/AdminDashboardScreen");
+      } else {
+        router.push("/screens/User/Homescreen");
+      }
+    } catch (e: any) {
+      alert(e.message || "Login failed");
+      setAuthToken(null);
+      setCurrentUser(null);
     }
   };
 

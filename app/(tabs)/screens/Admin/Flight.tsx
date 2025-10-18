@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import AdminLayout from "../../../../components/AdminLayout";
+import { flightsApi } from "../../../../lib/api";
 
 interface Flight {
   id: number;
@@ -63,31 +64,19 @@ export default function AdminFlightsScreen() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!flightNumber || !airline || !departure || !arrival || !price) return;
 
     if (editingFlight) {
-      setFlights((prev) =>
-        prev.map((f) =>
-          f.id === editingFlight.id
-            ? { ...f, flightNumber, airline, departure, arrival, date, time, price: +price, imageUrl, isFirstClass }
-            : f
-        )
-      );
+      try {
+        const updated = await flightsApi.update(editingFlight.id, { flightNumber, airline, departure, arrival, date, time, price: +price, imageUrl, isFirstClass });
+        setFlights((prev) => prev.map((f) => (f.id === editingFlight.id ? updated : f)));
+      } catch (e) { console.error(e); }
     } else {
-      const newFlight: Flight = {
-        id: flights.length + 1,
-        flightNumber,
-        airline,
-        departure,
-        arrival,
-        date,
-        time,
-        price: +price,
-        imageUrl,
-        isFirstClass,
-      };
-      setFlights([...flights, newFlight]);
+      try {
+        const created = await flightsApi.create({ flightNumber, airline, departure, arrival, date, time, price: +price, imageUrl, isFirstClass });
+        setFlights((prev) => [...prev, created]);
+      } catch (e) { console.error(e); }
     }
     resetForm();
   };
@@ -105,9 +94,13 @@ export default function AdminFlightsScreen() {
     setIsFirstClass(flight.isFirstClass);
   };
 
-  const handleDelete = (id: number) => {
-    setFlights((prev) => prev.filter((f) => f.id !== id));
+  const handleDelete = async (id: number) => {
+    try { await flightsApi.delete(id); setFlights((prev) => prev.filter((f) => f.id !== id)); } catch (e) { console.error(e); }
   };
+
+  React.useEffect(() => {
+    flightsApi.list().then(setFlights).catch(console.error);
+  }, []);
 
   return (
     <AdminLayout>

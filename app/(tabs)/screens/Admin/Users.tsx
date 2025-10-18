@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import AdminLayout from "../../../../components/AdminLayout";
+import { usersApi } from "../../../../lib/api";
 
 type User = {
   id: string;
@@ -37,30 +38,9 @@ export default function Users() {
   const [idOrPassport, setIdOrPassport] = useState("");
   const [role, setRole] = useState<"user" | "admin">("user");
 
-  // Load users (later connect to backend API)
+  // Load users
   useEffect(() => {
-    setUsers([
-      {
-        id: "1",
-        name: "Alice",
-        email: "alice@mail.com",
-        phone: "+267 123 4567",
-        dob: "2000-01-01",
-        idOrPassport: "A1234567",
-        role: "user",
-        createdAt: "2025-09-01",
-      },
-      {
-        id: "2",
-        name: "Bob",
-        email: "bob@mail.com",
-        phone: "+267 987 6543",
-        dob: "1995-05-10",
-        idOrPassport: "B7654321",
-        role: "admin",
-        createdAt: "2025-09-02",
-      },
-    ]);
+    usersApi.list().then(setUsers).catch(console.error);
   }, []);
 
   const handleSave = () => {
@@ -97,7 +77,9 @@ export default function Users() {
         role,
         createdAt: new Date().toISOString(),
       };
-      setUsers((prev) => [...prev, newUser]);
+      usersApi.create(newUser).then((created) => {
+        setUsers((prev) => [...prev, created]);
+      }).catch(console.error);
     }
     setModalVisible(false);
     setEditingUser(null);
@@ -121,7 +103,9 @@ export default function Users() {
   };
 
   const handleDelete = (id: string) => {
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+    usersApi.delete(id).then(() => {
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+    }).catch(console.error);
   };
 
   return (

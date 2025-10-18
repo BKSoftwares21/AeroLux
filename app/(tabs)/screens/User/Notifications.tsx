@@ -1,34 +1,22 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Stack, router } from 'expo-router';
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-const notifications = [
-  {
-    id: "1",
-    title: "Booking Confirmed",
-    message: "Your flight to Paris has been confirmed. Check your email for details.",
-    date: "2025-10-01",
-    read: false,
-  },
-  {
-    id: "2",
-    title: "Limited Time Offer",
-    message: "Get 20% off on your next booking to the Bahamas!",
-    date: "2025-09-28",
-    read: true,
-  },
-  {
-    id: "3",
-    title: "Payment Received",
-    message: "Your payment for Hotel Booking has been received.",
-    date: "2025-09-15",
-    read: true,
-  },
-];
+import { getCurrentUserCached, notificationsApi } from "../../../../lib/api";
 
 export default function Notifications() {
   const [modalVisible, setModalVisible] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    const user = getCurrentUserCached();
+    const userId = user?.id;
+    notificationsApi
+      .list(userId)
+      .then(setNotifications)
+      .catch((e) => console.error(e));
+  }, []);
 
   return (
     <>

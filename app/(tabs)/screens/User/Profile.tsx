@@ -1,16 +1,40 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router, Stack } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function UserProfileScreen() {
-  const [name, setName] = useState("Benita Kazadi");
-  const [email, setEmail] = useState("benita@example.com");
-  const [phone, setPhone] = useState("+267 712 3456");
-  const [dob, setDob] = useState<Date | undefined>(new Date(2000, 0, 1));
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dob, setDob] = useState<Date | undefined>(undefined);
   const [showPicker, setShowPicker] = useState(false);
-  const [idOrPassport, setIdOrPassport] = useState("A1234567");
+  const [idOrPassport, setIdOrPassport] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { getMe, getCurrentUserCached } = await import("../../../../lib/api");
+        const cached = getCurrentUserCached();
+        if (cached) {
+          setName(cached.name || "");
+          setEmail(cached.email || "");
+          setPhone(cached.phone || "");
+          if (cached.dob) setDob(new Date(cached.dob));
+          setIdOrPassport(cached.id_or_passport || cached.idOrPassport || "");
+        }
+        const me = await getMe();
+        if (me) {
+          setName(me.name || "");
+          setEmail(me.email || "");
+          setPhone(me.phone || "");
+          if (me.dob) setDob(new Date(me.dob));
+          setIdOrPassport(me.id_or_passport || me.idOrPassport || "");
+        }
+      } catch {}
+    })();
+  }, []);
 
   const handleSave = () => {
     Alert.alert("Profile Updated", "Your details have been successfully updated!");
