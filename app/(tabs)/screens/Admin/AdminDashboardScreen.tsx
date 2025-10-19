@@ -9,7 +9,7 @@ export default function AdminDashboardScreen() {
   const router = useRouter();
 
   return (
-    <AdminLayout>
+    <AdminLayout showBackButton={false}>
       {/* Options Wrapper (centered) */}
       <View style={styles.optionsWrapper}>
         {/* Users Management */}
