@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { getBookingById, markBookingPaid } from "../../../store/bookingsStore";
+
 
 export default function Payments() {
   // Get booking details from previous screen or via bookingId
@@ -34,6 +35,7 @@ export default function Payments() {
 
   return (
     <View style={styles.container}>
+       <Stack.Screen options={{ headerShown: false }} />
       {/* Header */}
       <Text style={styles.title}>Payment</Text>
       <Text style={styles.subtitle}>Confirm your booking and enter payment details</Text>
