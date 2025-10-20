@@ -2,15 +2,19 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { getBookingById, markBookingPaid } from "../../../store/bookingsStore";
 
 export default function Payments() {
-  // Get booking details from previous screen
-  const { type, name, location, price } = useLocalSearchParams<{
+  // Get booking details from previous screen or via bookingId
+  const { bookingId, type, name, location, price } = useLocalSearchParams<{
+    bookingId?: string;
     type?: string;
     name?: string;
     location?: string;
     price?: string;
   }>();
+
+  const booking = bookingId ? getBookingById(bookingId) : undefined;
 
   const [cardNumber, setCardNumber] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
@@ -18,8 +22,14 @@ export default function Payments() {
   const [cardName, setCardName] = useState("");
 
   const handlePayment = () => {
-    alert(`✅ Payment Successful! Your ${type} booking is confirmed.`);
-    router.push("../screens/User/Homescreen");
+    if (booking) {
+      markBookingPaid(booking.id);
+      alert(`✅ Payment Successful! Your ${booking.type.toLowerCase()} booking is confirmed.`);
+      router.push("../screens/User/BookingHistory");
+    } else {
+      alert(`✅ Payment Successful! Your ${type || "hotel"} booking is confirmed.`);
+      router.push("../screens/User/BookingHistory");
+    }
   };
 
   return (
@@ -32,7 +42,7 @@ export default function Payments() {
       <View style={styles.summaryCard}>
         <Text style={styles.summaryHeader}>Booking Summary</Text>
         <Text style={styles.summaryText}>
-          <Text style={styles.label}>Type:</Text> {type || "Hotel"}
+          <Text style={styles.label}>Type:</Text> {booking?.type || type || "Hotel"}
         </Text>
         <Text style={styles.summaryText}>
           <Text style={styles.label}>Name:</Text> {name || "The Bahamas Resort"}
@@ -41,7 +51,7 @@ export default function Payments() {
           <Text style={styles.label}>Location:</Text> {location || "The Bahamas"}
         </Text>
         <Text style={styles.total}>
-          Total: <Text style={styles.price}>${price || "300"}</Text>
+          Total: <Text style={styles.price}>${booking?.amount ?? price ?? "300"}</Text>
         </Text>
       </View>
 

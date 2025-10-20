@@ -1,88 +1,99 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Stack } from "expo-router";
-import React, { useState } from "react";
-import { FlatList, Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import React, { useMemo, useState } from "react";
+import { FlatList, Image, SafeAreaView, StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import UserModal from "./UserModal"; // Make sure this path is correct for your project
+import { useBookings, cancelBooking } from "../../../store/bookingsStore";
 
-const bookings = [
-    {
-        id: "1",
-        date: "2025-10-01",
-        amount: 299.99,
-        status: "Completed",
-        description: "Flight to Paris",
-    },
-    {
-        id: "2",
-        date: "2025-09-15",
-        amount: 120.0,
-        status: "Completed",
-        description: "Hotel Booking",
-    },
-    {       id: "3",
-        date: "2025-08-20",
-        amount: 450.5,
-        status: "Cancelled",
-        description: "Flight to New York",
-    },
-];          
-export default function BookingHistory() 
-{
-    const [modalVisible, setModalVisible] = useState(false);
-    
-    return (
-        <>
-            <SafeAreaView style={styles.container}></SafeAreaView>
-                <Stack.Screen options={{ headerShown: false }} />
-                {/* Top Navigation */}
-                <View style={styles.topNav}>
-                    <Image
-                        source={require("../../../../assets/images/logo.png")}
-                        style={styles.logo}
-                    />
-                    <Text style={styles.appName}>Aerolux</Text>
-                    <TouchableOpacity onPress={() => setModalVisible(true)}>
-                        <Ionicons name="menu" size={28} color="#D4AF37" />
-                    </TouchableOpacity>
+export default function BookingHistory() {
+  const [modalVisible, setModalVisible] = useState(false);
+  const bookings = useBookings();
+  // Simulate current user id; replace with real auth user id when available
+  const currentUserId = "u1";
+  const userBookings = useMemo(() => bookings.filter(b => b.userId === currentUserId), [bookings]);
+
+  const canCancel = (b: any) => {
+    const isCompletedAndPaid = b.status === "COMPLETED" && b.paymentStatus === "PAID";
+    return !isCompletedAndPaid && b.status !== "CANCELLED";
+  };
+
+  return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <SafeAreaView style={styles.container}>
+        {/* Top Navigation */}
+        <View style={styles.topNav}>
+          <Image
+            source={require("../../../../assets/images/logo.png")}
+            style={styles.logo}
+          />
+          <Text style={styles.appName}>Aerolux</Text>
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <Ionicons name="menu" size={28} color="#D4AF37" />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.title}>Booking History</Text>
+        <FlatList
+          data={userBookings}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item }) => {
+            const isCompletedAndPaid = item.status === "COMPLETED" && item.paymentStatus === "PAID";
+            return (
+              <View style={styles.card}>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Date:</Text>
+                  <Text style={styles.value}>{item.date}</Text>
                 </View>
-                <Text style={styles.title}>Booking History</Text>
-                <FlatList
-                    data={bookings}
+                <View style={styles.row}>
+                  <Text style={styles.label}>Amount:</Text>
+                  <Text style={styles.value}>${item.amount.toFixed(2)}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Status:</Text>
+                  <Text
+                    style={[
+                      styles.value,
+                      isCompletedAndPaid
+                        ? styles.completed
+                        : item.status === "CANCELLED"
+                        ? styles.cancelled
+                        : styles.pending,
+                    ]}
+                  >
+                    {isCompletedAndPaid ? "Completed" : item.status.charAt(0) + item.status.slice(1).toLowerCase()}
+                  </Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Description:</Text>
+                  <Text style={styles.value}>{item.description}</Text>
+                </View>
 
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <View style={styles.card}>                  
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Date:</Text>
-                                <Text style={styles.value}>{item.date}</Text>
-                            </View>
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Amount:</Text>
-                                <Text style={styles.value}>${item.amount.toFixed(2)}</Text>
-                            </View>
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Status:</Text>
-                                <Text style={styles.value}>{item.status}</Text>
-                            </View>
-                            <View style={styles.row}>
-                                <Text style={styles.label}>Description:</Text>
-                                <Text style={styles.value}>{item.description}</Text>
-                            </View>
-                        </View>
-                    )}
-                    ListEmptyComponent={
-                        <Text style={styles.emptyText}>No bookings found.</Text>
-                    }
-                />
-            {/* Modal Component */}
-            <UserModal visible={modalVisible} onClose={() => setModalVisible(false)}>
-                    <Text style={{ color: "#0A1A2F", fontSize: 18, textAlign: "center" }}>
-                      Profile or settings go here!
-                    </Text>
-                  </UserModal>
-        </>
-    );
+                {canCancel(item) && (
+                  <TouchableOpacity
+                    onPress={() => cancelBooking(item.id)}
+                    style={styles.cancelButton}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel Booking</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          }}
+          ListEmptyComponent={<Text style={styles.emptyText}>No bookings found.</Text>}
+          contentContainerStyle={{ paddingBottom: 40 }}
+        />
+
+        {/* Modal Component */}
+        <UserModal visible={modalVisible} onClose={() => setModalVisible(false)}>
+          <Text style={{ color: "#0A1A2F", fontSize: 18, textAlign: "center" }}>
+            Profile or settings go here!
+          </Text>
+        </UserModal>
+      </SafeAreaView>
+    </>
+  );
 }
 const styles = StyleSheet.create({
     container: {
@@ -100,7 +111,7 @@ const styles = StyleSheet.create({
     appName: {  
         fontSize: 20,
         fontWeight: "bold", 
-        color: "#ffffff",
+        color: "#D4AF37",
     },
     title: {
         fontSize: 28,
@@ -130,10 +141,33 @@ const styles = StyleSheet.create({
         flex: 1,
         flexWrap: "wrap",
     },
+    completed: {
+        color: "#22C55E",
+        fontWeight: "bold",
+    },
+    cancelled: {
+        color: "#EF4444",
+        fontWeight: "bold",
+    },
+    pending: {
+        color: "#FACC15",
+        fontWeight: "bold",
+    },
     emptyText: {
         color: "#FFFFFF",
         textAlign: "center",
         marginTop: 20,
         fontSize: 16,
+    },
+    cancelButton: {
+        marginTop: 12,
+        backgroundColor: "#EF4444",
+        paddingVertical: 10,
+        borderRadius: 8,
+        alignItems: "center",
+    },
+    cancelButtonText: {
+        color: "#fff",
+        fontWeight: "bold",
     },
 });

@@ -6,9 +6,10 @@ import AdminModal from "../app/(tabs)/screens/Admin/AdminModal";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
+  showBackButton?: boolean;
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+export default function AdminLayout({ children, showBackButton = true }: AdminLayoutProps) {
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -30,12 +31,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <View style={styles.content}>{children}</View>
 
         {/* Bottom Back Button */}
-        <View style={styles.bottomBar}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={20} color="#0A1A2F" />
-            <Text style={styles.backText}>Back</Text>
-          </TouchableOpacity>
-        </View>
+        {showBackButton && (
+          <View style={styles.bottomBar}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={20} color="#0A1A2F" />
+              <Text style={styles.backText}>Back</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </SafeAreaView>
 
       {/* Global Admin Modal */}
