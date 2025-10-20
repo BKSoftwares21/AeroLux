@@ -1,32 +1,18 @@
 // screens/Admin/BookingsPage.tsx
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useBookings, updateBookingStatus, cancelBooking, deleteBooking as storeDeleteBooking } from "../../../store/bookingsStore";
 
 
 export default function Bookings() {
-  const [bookings, setBookings] = useState([]);
-  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const bookings = useBookings();
 
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
-  const fetchBookings = async () => {
-    // Replace with API call
-    setBookings([
-      { id: 1, userId: "u1", type: "FLIGHT", reference: "FL123", status: "PENDING" },
-      { id: 2, userId: "u2", type: "HOTEL", reference: "HT456", status: "CONFIRMED" },
-    ]);
+  const updateBooking = (id: string | number, status: "CONFIRMED" | "CANCELLED" | "PENDING" | "COMPLETED") => {
+    updateBookingStatus(id, status);
   };
 
-  const updateBooking = async (id: number, status: string) => {
-    // Replace with API PUT request
-    setBookings(bookings.map(b => (b.id === id ? { ...b, status } : b)));
-  };
-
-  const deleteBooking = async (id: number) => {
-    // Replace with API DELETE request
-    setBookings(bookings.filter(b => b.id !== id));
+  const deleteBooking = (id: string | number) => {
+    storeDeleteBooking(id);
   };
 
   return (
@@ -36,7 +22,7 @@ export default function Bookings() {
 
       <FlatList
         data={bookings}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>
@@ -73,7 +59,7 @@ export default function Bookings() {
                 <Text style={styles.actionText}>Confirm</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => updateBooking(item.id, "CANCELLED")}
+                onPress={() => cancelBooking(item.id)}
                 style={[styles.button, { backgroundColor: "#EF4444" }]}
               >
                 <Text style={styles.actionText}>Cancel</Text>

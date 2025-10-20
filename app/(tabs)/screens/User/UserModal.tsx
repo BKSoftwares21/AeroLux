@@ -41,7 +41,11 @@ export default function UserModal({ visible, onClose, children }: UserModalProps
     });
   };
 
-  const handleNavigate = (path: "/screens/User/Profile" | "/screens/User/Notifications") => {
+  const handleNavigate = (path: 
+    "/screens/User/Profile" | 
+    "/screens/User/Notifications" | 
+    "/screens/User/Payments"
+  ) => {
     handleClose();
     setTimeout(() => {
       router.push(path);
@@ -81,6 +85,13 @@ export default function UserModal({ visible, onClose, children }: UserModalProps
           >
             <Ionicons name="notifications-outline" size={24} color="#0A1A2F" style={styles.optionIcon} />
             <Text style={styles.optionText}>Notifications</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.option}
+            onPress={() => handleNavigate("/screens/User/Payments")}
+          >
+            <Ionicons name="card-outline" size={24} color="#0A1A2F" style={styles.optionIcon} />
+            <Text style={styles.optionText}>Checkout</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.logoutOption}
