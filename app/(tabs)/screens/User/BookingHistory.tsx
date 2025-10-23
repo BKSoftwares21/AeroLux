@@ -1,9 +1,9 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import React, { useMemo, useState } from "react";
-import { FlatList, Image, SafeAreaView, StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { cancelBooking, useBookings } from "../../../store/bookingsStore";
 import UserModal from "./UserModal"; // Make sure this path is correct for your project
-import { useBookings, cancelBooking } from "../../../store/bookingsStore";
 
 export default function BookingHistory() {
   const [modalVisible, setModalVisible] = useState(false);
@@ -82,8 +82,27 @@ export default function BookingHistory() {
             );
           }}
           ListEmptyComponent={<Text style={styles.emptyText}>No bookings found.</Text>}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={{ paddingBottom: 120 }}
         />
+
+        {/* Bottom Navigation */}
+        <View style={styles.bottomNav}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push("/screens/User/Homescreen")}>
+            <Ionicons name="home" size={26} color="#0A1A2F" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push("/screens/User/SearchScreen")}>
+            <Ionicons name="search" size={26} color="#0A1A2F" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push("/screens/User/PaymentHistory")}>
+            <Ionicons name="card" size={26} color="#0A1A2F" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push("/screens/User/BookingHistory")}>
+            <Ionicons name="clipboard" size={26} color="#D4AF37" />
+          </TouchableOpacity>
+        </View>
 
         {/* Modal Component */}
         <UserModal visible={modalVisible} onClose={() => setModalVisible(false)}>
@@ -95,6 +114,7 @@ export default function BookingHistory() {
     </>
   );
 }
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -169,5 +189,30 @@ const styles = StyleSheet.create({
     cancelButtonText: {
         color: "#fff",
         fontWeight: "bold",
+    },
+
+    /* Bottom nav styles (added) */
+    navItem: {
+      width: 48,
+      height: 48,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    bottomNav: {
+      position: "absolute",
+      bottom: 20,
+      left: 20,
+      right: 20,
+      height: 64,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: "#fff",
+      paddingHorizontal: 28,
+      borderRadius: 30,
+      elevation: 6,
+      shadowColor: "#000",
+      shadowOpacity: 0.12,
+      shadowRadius: 6,
     },
 });

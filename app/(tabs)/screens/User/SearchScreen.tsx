@@ -58,12 +58,21 @@ export default function Search() {
 
         {/* Bottom Navigation */}
         <View style={styles.bottomNav}>
-          <TouchableOpacity onPress={() => router.push('./Homescreen')}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/screens/User/Homescreen')}>
             <Ionicons name="home" size={26} color="#0A1A2F" />
           </TouchableOpacity>
-          <Ionicons name="search" size={26} color="#D4AF37" />
-          <Ionicons name="heart" size={26} color="#0A1A2F" />
-          <Ionicons name="person" size={26} color="#0A1A2F" />
+
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/screens/User/SearchScreen')}>
+            <Ionicons name="search" size={26} color="#D4AF37" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/screens/User/PaymentHistory')}>
+            <Ionicons name="card" size={26} color="#0A1A2F" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push('/screens/User/BookingHistory')}>
+            <Ionicons name="clipboard" size={26} color="#0A1A2F" />
+          </TouchableOpacity>
         </View>
           
       </SafeAreaView>
@@ -136,15 +145,23 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
+    height: 64,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: '#fff',
-    paddingVertical: 15,
+    paddingHorizontal: 28,
     borderRadius: 30,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  navItem: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   topNav: {
     flexDirection: 'row',

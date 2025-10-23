@@ -54,8 +54,12 @@ export default function HomeScreen() {
          <TouchableOpacity onPress={() => router.push('./SearchScreen')}>
           <Ionicons name="search" size={26} color="#0A1A2F"  />
           </TouchableOpacity>
-          <Ionicons name="heart" size={26} color="#0A1A2F" />
-          <Ionicons name="person" size={26} color="#0A1A2F" />
+         <TouchableOpacity onPress={() => router.push('./PaymentHistory')}>
+           <Ionicons name="card" size={26} color="#0A1A2F" />
+     </TouchableOpacity>
+     <TouchableOpacity onPress={() => router.push('./BookingHistory')}>
+        <Ionicons name="clipboard" size={26} color="#0A1A2F" />
+      </TouchableOpacity>
         </View>
 
         {/* User Modal */}
@@ -74,6 +78,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A1A2F',
   },
+  navItem: {
+ width: 48,
+   height: 48,
+  alignItems: 'center',
+  justifyContent: 'center',
+ },
   topNav: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -150,17 +160,20 @@ const styles = StyleSheet.create({
   },
   bottomNav: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#fff',
-    paddingVertical: 15,
-    borderRadius: 30,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
+ bottom: 20,
+ left: 20,
+ right: 20,
+  height: 64,
+ flexDirection: 'row',
+justifyContent: 'space-between',
+alignItems: 'center',
+backgroundColor: '#fff',
+paddingHorizontal: 28,
+borderRadius: 30,
+shadowColor: '#000',
+shadowOpacity: 0.12,
+shadowRadius: 6,
+  elevation: 6,
+  
   },
 });

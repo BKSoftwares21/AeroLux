@@ -93,17 +93,22 @@ export default function PaymentHistory() {
           contentContainerStyle={{ paddingBottom: 80 }}
         />
 
-        {/* Bottom Navigation */}
+        {/* Bottom Navigation - updated layout */}
         <View style={styles.bottomNav}>
-          <TouchableOpacity onPress={() => router.push("/screens/User/Homescreen")}>
-            <Ionicons name="home" size={26} color="#D4AF37" />
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push("/screens/User/Homescreen")}>
+            <Ionicons name="home" size={26} color="#0A1A2F" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push("/screens/User/SearchScreen")}>
+
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push("/screens/User/SearchScreen")}>
             <Ionicons name="search" size={26} color="#0A1A2F" />
           </TouchableOpacity>
-          <Ionicons name="heart" size={26} color="#0A1A2F" />
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
-            <Ionicons name="person" size={26} color="#0A1A2F" />
+
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push("/screens/User/PaymentHistory")}>
+            <Ionicons name="card" size={26} color="#D4AF37" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push("/screens/User/BookingHistory")}>
+            <Ionicons name="clipboard" size={26} color="#0A1A2F" />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -183,21 +188,29 @@ const styles = StyleSheet.create({
     marginTop: 40,
     fontSize: 16,
   },
+
+  /* Bottom nav styles updated */
+  navItem: {
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   bottomNav: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    right: 20,
+    height: 64,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    position: "absolute",
-    left: 20,
-    right: 20,
-    bottom: 20,
     backgroundColor: "#fff",
+    paddingHorizontal: 28,
     borderRadius: 30,
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    elevation: 5,
+    elevation: 6,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
   },
 });
