@@ -1,26 +1,32 @@
 import { router, Stack } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { api } from "../../../services/api";
 export default function ForgotPassword() {
   const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Simulate sending code (replace with API call)
   const handleSendCode = async () => {
     if (!email.trim()) {
       Alert.alert("Please enter your email.");
       return;
     }
-    // TODO: Call backend to send code to email
-    // await api.sendResetCode(email);
-    Alert.alert("A 6-digit code has been sent to your email.");
-    setStep(2);
+    try {
+      setLoading(true);
+      const res = await api.forgotPassword(email.trim());
+      Alert.alert("A 6-digit code has been sent to your email.", res.test_code ? `Test code: ${res.test_code}` : undefined);
+      setStep(2);
+    } catch (e: any) {
+      Alert.alert(e.message || "Failed to send code");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Simulate verifying code and changing password (replace with API call)
   const handleResetPassword = async () => {
     if (code.length !== 6) {
       Alert.alert("Please enter the 6-digit code.");
@@ -34,11 +40,16 @@ export default function ForgotPassword() {
       Alert.alert("Passwords do not match.");
       return;
     }
-    // TODO: Call backend to verify code and change password
-    // await api.verifyCodeAndChangePassword(email, code, newPassword);
-    Alert.alert("Password changed successfully!");
-    // Optionally, navigate to login
-     router.push("./Login");
+    try {
+      setLoading(true);
+      await api.resetPassword({ email: email.trim(), code, new_password: newPassword });
+      Alert.alert("Password changed successfully!");
+      router.push("./Login");
+    } catch (e: any) {
+      Alert.alert(e.message || "Failed to reset password");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -56,8 +67,8 @@ export default function ForgotPassword() {
             keyboardType="email-address"
             autoCapitalize="none"
           />
-          <TouchableOpacity style={styles.button} onPress={handleSendCode}>
-            <Text style={styles.buttonText}>Send Code</Text>
+          <TouchableOpacity style={styles.button} onPress={handleSendCode} disabled={loading}>
+            <Text style={styles.buttonText}>{loading ? '...' : 'Send Code'}</Text>
           </TouchableOpacity>
         </>
       ) : (
@@ -87,8 +98,8 @@ export default function ForgotPassword() {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
           />
-          <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
-            <Text style={styles.buttonText}>Change Password</Text>
+          <TouchableOpacity style={styles.button} onPress={handleResetPassword} disabled={loading}>
+            <Text style={styles.buttonText}>{loading ? '...' : 'Change Password'}</Text>
           </TouchableOpacity>
         </>
       )}

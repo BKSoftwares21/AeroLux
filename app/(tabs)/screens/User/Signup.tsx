@@ -1,7 +1,9 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router, Stack } from "expo-router";
 import React, { useState } from "react";
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { api } from "../../../services/api";
+import { session } from "../../../store/session";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -10,7 +12,8 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [dob, setDob] = useState<Date | undefined>(undefined);
   const [showPicker, setShowPicker] = useState(false);
-   const [idOrPassport, setIdOrPassport] = useState(""); 
+  const [idOrPassport, setIdOrPassport] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const getAge = (date: Date) => {
     const today = new Date();
@@ -22,28 +25,34 @@ export default function Signup() {
     return age;
   };
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (password !== confirmPassword) {
-      alert("Passwords do not match!");
+      Alert.alert("Passwords do not match!");
       return;
     }
     if (!dob) {
-      alert("Please select your Date of Birth.");
+      Alert.alert("Please select your Date of Birth.");
       return;
     }
     if (getAge(dob) < 18) {
-      alert("You must be at least 18 years old to sign up.");
+      Alert.alert("You must be at least 18 years old to sign up.");
       return;
     }
-     if (!idOrPassport.trim()) {
-      alert("Please enter your ID or Passport Number.");
+    if (!idOrPassport.trim()) {
+      Alert.alert("Please enter your ID or Passport Number.");
       return;
     }
-    // ...existing code...
-    console.log({ name, email, password, dob: dob?.toISOString(), idOrPassport, role: "user" });
-    router.push("./Homescreen");
+    try {
+      setLoading(true);
+      const { user } = await api.signup({ email, password, full_name: name });
+      session.setUser(user);
+      router.push("./Homescreen");
+    } catch (e: any) {
+      Alert.alert(e.message || "Signup failed");
+    } finally {
+      setLoading(false);
+    }
   };
-
 
   const handleLoginRedirect = () => {
     router.push("../Auth/Login");
@@ -127,8 +136,8 @@ export default function Signup() {
         onChangeText={setConfirmPassword}
       />
 
-      <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
-        <Text style={styles.signupText}>SIGN UP</Text>
+      <TouchableOpacity style={styles.signupButton} onPress={handleSignup} disabled={loading}>
+        <Text style={styles.signupText}>{loading ? '...' : 'SIGN UP'}</Text>
       </TouchableOpacity>
 
     <TouchableOpacity onPress={handleLoginRedirect} style={styles.loginRedirect}>

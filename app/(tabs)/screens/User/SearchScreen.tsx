@@ -1,18 +1,32 @@
 // screens/Search.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { api, type Hotel } from "../../../services/api";
 import UserModal from './UserModal';
 export default function Search() {
 
-    const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [name, setName] = useState("");
+  const [city, setCity] = useState("");
+  const [available, setAvailable] = useState(false);
+  const [results, setResults] = useState<Hotel[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const data = [
-    { id: "1", name: "Hotel BlueSky", location: "Cape Town" },
-    { id: "2", name: "Safari Lodge", location: "Kruger Park" },
-    { id: "3", name: "City View Apartments", location: "Johannesburg" },
-  ];
+  const runSearch = async () => {
+    try {
+      setLoading(true);
+      const { hotels } = await api.searchHotels({ name, city, available: available ? 1 : undefined });
+      setResults(hotels);
+    } catch (e) {
+      // noop
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { runSearch(); }, []);
 
   return (
     <> 
@@ -35,23 +49,44 @@ export default function Search() {
 
         <Text style={styles.title}>Search</Text>
 
-        {/* Search Input with Icon */}
+        {/* Search Inputs */}
         <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color="#0A1A2F" style={styles.icon} />
           <TextInput
-            placeholder="Search hotels, flights, or packages"
+            placeholder="Name"
             style={styles.input}
+            value={name}
+            onChangeText={setName}
           />
         </View>
+        <View style={styles.searchContainer}>
+          <Ionicons name="location" size={20} color="#0A1A2F" style={styles.icon} />
+          <TextInput
+            placeholder="City"
+            style={styles.input}
+            value={city}
+            onChangeText={setCity}
+          />
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+          <TouchableOpacity onPress={() => setAvailable(!available)} style={{ marginRight: 10 }}>
+            <Ionicons name={available ? 'checkbox' : 'square-outline'} size={22} color="#D4AF37" />
+          </TouchableOpacity>
+          <Text style={{ color: '#fff' }}>Only show hotels with available rooms</Text>
+        </View>
+        <TouchableOpacity style={styles.searchButton} onPress={runSearch}>
+          <Text style={styles.searchButtonText}>{loading ? 'Searching...' : 'Search'}</Text>
+        </TouchableOpacity>
 
         {/* Results List */}
         <FlatList
-          data={data}
-          keyExtractor={(item) => item.id}
+          data={results}
+          keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
             <View style={styles.card}>
               <Text style={styles.cardTitle}>{item.name}</Text>
-              <Text style={styles.cardSubtitle}>{item.location}</Text>
+              <Text style={styles.cardSubtitle}>{item.city}, {item.country}</Text>
+              {item.description ? <Text style={styles.cardSubtitle}>{item.description}</Text> : null}
             </View>
           )}
         />
@@ -121,6 +156,17 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     fontSize: 16,
+  },
+  searchButton: {
+    backgroundColor: '#D4AF37',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  searchButtonText: {
+    color: '#0A1A2F',
+    fontWeight: 'bold',
   },
   card: {
     backgroundColor: "#fff",

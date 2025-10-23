@@ -1,34 +1,24 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Stack, router } from 'expo-router';
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { api } from "../../../services/api";
+import { session } from "../../../store/session";
 
-const notifications = [
-  {
-    id: "1",
-    title: "Booking Confirmed",
-    message: "Your flight to Paris has been confirmed. Check your email for details.",
-    date: "2025-10-01",
-    read: false,
-  },
-  {
-    id: "2",
-    title: "Limited Time Offer",
-    message: "Get 20% off on your next booking to the Bahamas!",
-    date: "2025-09-28",
-    read: true,
-  },
-  {
-    id: "3",
-    title: "Payment Received",
-    message: "Your payment for Hotel Booking has been received.",
-    date: "2025-09-15",
-    read: true,
-  },
-];
+type Noti = { id: number; title: string; body: string; is_read: 0 | 1; created_at: string };
 
 export default function Notifications() {
-  const [modalVisible, setModalVisible] = useState(false);
+  const [items, setItems] = useState<Noti[]>([]);
+
+  useEffect(() => {
+    const run = async () => {
+      const email = session.user?.email;
+      if (!email) return;
+      const { notifications } = await api.getNotifications({ email });
+      setItems(notifications);
+    };
+    run();
+  }, []);
 
   return (
     <>
@@ -48,13 +38,13 @@ export default function Notifications() {
 
         <Text style={styles.title}>Notifications</Text>
         <FlatList
-          data={notifications}
-          keyExtractor={(item) => item.id}
+          data={items}
+          keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
-            <View style={[styles.card, item.read ? styles.read : styles.unread]}>
+            <View style={[styles.card, item.is_read ? styles.read : styles.unread]}>
               <Text style={styles.cardTitle}>{item.title}</Text>
-              <Text style={styles.cardMessage}>{item.message}</Text>
-              <Text style={styles.cardDate}>{item.date}</Text>
+              <Text style={styles.cardMessage}>{item.body}</Text>
+              <Text style={styles.cardDate}>{new Date(item.created_at).toLocaleString()}</Text>
             </View>
           )}
           ListEmptyComponent={
@@ -63,13 +53,6 @@ export default function Notifications() {
           contentContainerStyle={{ paddingBottom: 80 }}
         />
       </SafeAreaView>
-
-      {/* User Modal (optional, remove if not needed on this page) */}
-      {/* <UserModal visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <Text style={{ color: "#0A1A2F", fontSize: 18, textAlign: "center" }}>
-          Profile or settings go here!
-        </Text>
-      </UserModal> */}
     </>
   );
 }

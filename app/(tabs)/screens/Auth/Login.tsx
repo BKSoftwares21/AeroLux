@@ -1,17 +1,29 @@
 import { router, Stack } from "expo-router";
 import React, { useState } from "react";
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { api } from "../../../services/api";
+import { session } from "../../../store/session";
 
 export default function Login() {
   const [role, setRole] = useState<"user" | "admin">("user");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    if (role === "user") {
-      router.push("/screens/User/Homescreen");
-    } else if (role === "admin") {
-      router.push("/screens/Admin/AdminDashboardScreen");
+  const handleLogin = async () => {
+    try {
+      setLoading(true);
+      const { user } = await api.login({ email, password });
+      session.setUser(user);
+      if (user.role === "admin") {
+        router.push("/screens/Admin/AdminDashboardScreen");
+      } else {
+        router.push("/screens/User/Homescreen");
+      }
+    } catch (e: any) {
+      Alert.alert(e.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,6 +50,8 @@ export default function Login() {
         style={styles.input}
         placeholder="Email"
         placeholderTextColor="#ccc"
+        autoCapitalize="none"
+        keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
       />
@@ -73,13 +87,13 @@ export default function Login() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginText}>LOGIN</Text>
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
+        <Text style={styles.loginText}>{loading ? '...' : 'LOGIN'}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleSignup} style={styles.signupContainer}>
         <Text style={styles.signupText}>
-          Don't have an account? <Text style={styles.signupLink}>Sign Up</Text>
+          Don&apos;t have an account? <Text style={styles.signupLink}>Sign Up</Text>
         </Text>
       </TouchableOpacity>
     </View>
