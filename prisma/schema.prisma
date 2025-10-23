@@ -5,11 +5,118 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../app/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  fullName  String   @map("full_name")
+  phone     String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  bookings      Booking[]
+  notifications Notification[]
+  payments      Payment[]
+
+  @@map("users")
+}
+
+model Hotel {
+  id          Int     @id @default(autoincrement())
+  name        String
+  city        String
+  country     String
+  description String?
+  starRating  Int?    @map("star_rating")
+  amenities   Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  bookings Booking[]
+
+  @@map("hotels")
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  userId        Int           @map("user_id")
+  type          BookingType
+  reference     String        @unique
+  date          DateTime
+  amount        Float
+  description   String
+  status        BookingStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(UNPAID) @map("payment_status")
+  metadata      Json?
+  hotelId       Int?          @map("hotel_id")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id])
+  hotel   Hotel?   @relation(fields: [hotelId], references: [id])
+  payment Payment?
+
+  @@map("bookings")
+}
+
+model Payment {
+  id        String    @id @default(cuid())
+  bookingId String    @unique @map("booking_id")
+  userId    Int       @map("user_id")
+  amount    Float
+  method    String?
+  status    String    @default("pending")
+  paidAt    DateTime? @map("paid_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("payments")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  title     String
+  body      String
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+enum Role {
+  USER  @map("user")
+  ADMIN @map("admin")
+}
+
+enum BookingType {
+  FLIGHT
+  HOTEL
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
 }
