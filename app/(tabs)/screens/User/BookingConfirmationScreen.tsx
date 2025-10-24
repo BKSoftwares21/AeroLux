@@ -4,9 +4,6 @@ import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function BookingConfirmationScreen() {
-  const handleGoHome = () => {
-    router.push("../screens/User/Homescreen"); // Adjust path as needed
-  };
 
   return (
     <View style={styles.container}>

@@ -1,18 +1,110 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from "react-native";
+import { router } from "expo-router";
 import AdminLayout from "../../../../components/AdminLayout";
+import { session } from "../../../store/session";
 
 export default function ProfileAdmin() {
-  const [name, setName] = useState("Admin User");
-  const [email, setEmail] = useState("admin@aerolux.com");
-  const [department, setDepartment] = useState("Flight Management");
-  const [role] = useState("Administrator");
-  const [lastLogin] = useState("2025-10-06 09:35 AM");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [department, setDepartment] = useState("");
+  const [role, setRole] = useState("");
+  const [lastLogin, setLastLogin] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    Alert.alert("Profile Updated", "Admin details have been successfully updated!");
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      const user = session.user || await session.refreshProfile();
+      
+      if (user) {
+        if (user.role !== 'admin') {
+          Alert.alert("Access Denied", "You don't have admin privileges", [
+            { text: "OK", onPress: () => router.replace("/") }
+          ]);
+          return;
+        }
+        
+        setName(user.full_name || "");
+        setEmail(user.email || "");
+        setDepartment(user.department || "");
+        setRole(user.role === 'admin' ? 'Administrator' : 'User');
+        setLastLogin(user.last_login ? new Date(user.last_login).toLocaleString() : 'Never');
+      } else {
+        Alert.alert("Error", "Please log in to view your profile", [
+          { text: "OK", onPress: () => router.replace("/auth/login") }
+        ]);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to load profile. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSave = async () => {
+    if (!session.user) {
+      Alert.alert("Error", "Please log in to update your profile");
+      return;
+    }
+
+    if (session.user.role !== 'admin') {
+      Alert.alert("Error", "You don't have permission to update admin profiles");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      
+      const updates = {
+        full_name: name.trim(),
+        department: department.trim() || null,
+      };
+
+      await session.updateProfile(updates);
+      Alert.alert("Success", "Your admin profile has been updated successfully!");
+      
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to update profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Logout", 
+          style: "destructive",
+          onPress: () => {
+            session.logout();
+            router.replace("/auth/login");
+          }
+        }
+      ]
+    );
+  };
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator size="large" color="#FFD700" />
+          <Text style={{ color: '#FFD700', marginTop: 10 }}>Loading profile...</Text>
+        </View>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -37,13 +129,14 @@ export default function ProfileAdmin() {
         placeholderTextColor="#ccc"
         value={name}
         onChangeText={setName}
+        editable={!saving}
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { opacity: 0.5 }]}
         placeholder="Email"
         placeholderTextColor="#ccc"
         value={email}
-        onChangeText={setEmail}
+        editable={false}
       />
       <TextInput
         style={styles.input}
@@ -51,6 +144,7 @@ export default function ProfileAdmin() {
         placeholderTextColor="#ccc"
         value={department}
         onChangeText={setDepartment}
+        editable={!saving}
       />
 
       {/* Read-Only Fields */}
@@ -65,13 +159,21 @@ export default function ProfileAdmin() {
       </View>
 
       {/* Save Button */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Ionicons name="save-outline" size={20} color="#0A1A2F" />
-        <Text style={styles.saveText}>Save Changes</Text>
+      <TouchableOpacity 
+        style={[styles.saveButton, saving && { opacity: 0.5 }]} 
+        onPress={handleSave}
+        disabled={saving}
+      >
+        {saving ? (
+          <ActivityIndicator size="small" color="#0A1A2F" />
+        ) : (
+          <Ionicons name="save-outline" size={20} color="#0A1A2F" />
+        )}
+        <Text style={styles.saveText}>{saving ? "Saving..." : "Save Changes"}</Text>
       </TouchableOpacity>
 
       {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={20} color="#FFD700" />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>

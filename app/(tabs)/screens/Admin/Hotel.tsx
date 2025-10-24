@@ -1,5 +1,7 @@
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import AdminLayout from "../../../../components/AdminLayout";
 import { api, type Hotel as ApiHotel } from "../../../services/api";
 
@@ -13,6 +15,7 @@ export default function AdminHotelsScreen() {
   const [description, setDescription] = useState("");
   const [star, setStar] = useState("");
   const [amenitiesText, setAmenitiesText] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
 
   const resetForm = () => {
     setName("");
@@ -21,6 +24,7 @@ export default function AdminHotelsScreen() {
     setDescription("");
     setStar("");
     setAmenitiesText("");
+    setImageUrl(undefined);
     setEditing(null);
   };
 
@@ -35,9 +39,11 @@ export default function AdminHotelsScreen() {
       alert("Please fill all required fields.");
       return;
     }
-    const amenities = amenitiesText
+    const amenitiesArray = amenitiesText
       ? amenitiesText.split(",").map((s) => s.trim()).filter(Boolean)
       : [];
+    const amenities: any = { list: amenitiesArray };
+    if (imageUrl) amenities.imageUrl = imageUrl;
     if (editing) {
       await api.updateHotel(editing.id, {
         name,
@@ -67,9 +73,16 @@ export default function AdminHotelsScreen() {
     setCity((h as any).city || "");
     setCountry((h as any).country || "");
     setDescription((h as any).description || "");
-    setStar(String((h as any).star_rating || ""));
+    setStar(String((h as any).star_rating || (h as any).starRating || ""));
     const am = (h as any).amenities;
-    setAmenitiesText(Array.isArray(am) ? am.join(", ") : typeof am === 'string' ? am : "");
+    if (am && typeof am === 'object') {
+      if (Array.isArray(am.list)) setAmenitiesText(am.list.join(", "));
+      if (am.imageUrl) setImageUrl(am.imageUrl);
+    } else if (Array.isArray(am)) {
+      setAmenitiesText(am.join(", "));
+    } else if (typeof am === 'string') {
+      setAmenitiesText(am);
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -81,6 +94,28 @@ export default function AdminHotelsScreen() {
     <AdminLayout>
       <View style={styles.container}>
         <Text style={styles.header}>Hotels</Text>
+
+        <TouchableOpacity style={styles.imagePicker} onPress={async () => {
+          const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.7 });
+          if (!result.canceled && result.assets?.length) {
+            const asset = result.assets[0];
+            try {
+              const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' as any });
+              const mime = (asset as any).mimeType || 'image/jpeg';
+              const data = `data:${mime};base64,${base64}`;
+              const uploaded = await api.uploadImage({ data, filename: (asset as any).fileName || 'hotel' });
+              setImageUrl(uploaded.url);
+            } catch {
+              setImageUrl(asset.uri);
+            }
+          }
+        }}>
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={styles.hotelImage} />
+          ) : (
+            <Text style={styles.imagePickerText}>Upload Hotel Image</Text>
+          )}
+        </TouchableOpacity>
 
         <TextInput style={styles.input} placeholder="Name" placeholderTextColor="#ccc" value={name} onChangeText={setName} />
         <TextInput style={styles.input} placeholder="City" placeholderTextColor="#ccc" value={city} onChangeText={setCity} />
@@ -98,10 +133,13 @@ export default function AdminHotelsScreen() {
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
             <View style={styles.card}>
+              {((item as any).amenities && (item as any).amenities.imageUrl) ? (
+                <Image source={{ uri: (item as any).amenities.imageUrl }} style={styles.hotelImage} />
+              ) : null}
               <Text style={styles.cardTitle}>{item.name}</Text>
               <Text style={styles.cardSub}>{(item as any).city}, {(item as any).country}</Text>
               {(item as any).description ? <Text style={styles.cardSub}>{(item as any).description}</Text> : null}
-              {(item as any).star_rating ? <Text style={styles.cardSub}>⭐ {(item as any).star_rating}</Text> : null}
+              {(item as any).star_rating || (item as any).starRating ? <Text style={styles.cardSub}>⭐ {(item as any).star_rating ?? (item as any).starRating}</Text> : null}
               <View style={styles.cardActions}>
                 <TouchableOpacity style={styles.editButton} onPress={() => handleEdit(item)}>
                   <Text style={styles.actionText}>Edit</Text>
@@ -121,6 +159,9 @@ export default function AdminHotelsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0A1A2F", padding: 20 },
   header: { color: '#FFD700', fontWeight: 'bold', fontSize: 18, marginBottom: 10 },
+  imagePicker: { alignItems: 'center', marginBottom: 15 },
+  imagePickerText: { color: '#FFD700', fontSize: 16, padding: 20, borderWidth: 1, borderColor: '#FFD700', borderRadius: 8 },
+  hotelImage: { width: 140, height: 100, borderRadius: 8, marginBottom: 10 },
   input: {
     borderWidth: 1,
     borderColor: "#FFFFFF",

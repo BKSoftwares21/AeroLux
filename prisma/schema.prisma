@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -45,6 +45,23 @@ model Hotel {
   bookings Booking[]
 
   @@map("hotels")
+}
+
+model Flight {
+  id            Int      @id @default(autoincrement())
+  flightNumber  String   @unique @map("flight_number")
+  airline       String
+  departure     String
+  arrival       String
+  date          DateTime
+  time          String?
+  price         Float
+  imageUrl      String?  @map("image_url")
+  isFirstClass  Boolean  @default(false) @map("is_first_class")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("flights")
 }
 
 model Booking {

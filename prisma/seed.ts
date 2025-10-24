@@ -1,4 +1,4 @@
-import { PrismaClient } from '../app/generated/prisma';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -82,6 +82,34 @@ async function main() {
           gym: true,
           restaurant: true,
         },
+      },
+    }),
+  ]);
+
+  // Create flights
+  await Promise.all([
+    prisma.flight.create({
+      data: {
+        flightNumber: 'ALX452',
+        airline: 'AeroLux Airlines',
+        departure: 'Johannesburg',
+        arrival: 'Paris',
+        date: new Date('2025-10-25'),
+        time: '14:30',
+        price: 899,
+        isFirstClass: true,
+      },
+    }),
+    prisma.flight.create({
+      data: {
+        flightNumber: 'ALX901',
+        airline: 'AeroLux Airlines',
+        departure: 'New York',
+        arrival: 'Tokyo',
+        date: new Date('2025-11-15'),
+        time: '08:00',
+        price: 1299,
+        isFirstClass: false,
       },
     }),
   ]);

@@ -1,42 +1,46 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import UserModal from "./UserModal"; // Make sure this path is correct for your project
-const payments = [
-  {
-    id: "1",
-    date: "2025-10-01",
-    amount: 299.99,
-    method: "Credit Card",
-    status: "Completed",
-    description: "Flight to Paris",
-  },
-  {
-    id: "2",
-    date: "2025-09-15",
-    amount: 120.0,
-    method: "PayPal",
-    status: "Completed",
-    description: "Hotel Booking",
-  },
-  {
-    id: "3",
-    date: "2025-08-20",
-    amount: 450.5,
-    method: "Debit Card",
-    status: "Refunded",
-    description: "Flight to New York",
-  },
-];
+import { api } from "../../../services/api";
+import { session } from "../../../store/session";
+import UserModal from "./UserModal";
+
+type PaymentItem = {
+  id: string;
+  date: string;
+  amount: number;
+  method?: string;
+  status: string;
+  description?: string;
+};
 
 export default function PaymentHistory() {
   const [modalVisible, setModalVisible] = useState(false);
+  const [items, setItems] = useState<PaymentItem[]>([]);
+
+  useEffect(() => {
+    const run = async () => {
+      const userId = session.user?.id;
+      if (!userId) return;
+      const { payments } = await api.getUserPayments(userId);
+      const mapped = (payments || []).map((p: any) => ({
+        id: String(p.id),
+        date: new Date(p.createdAt || Date.now()).toISOString().slice(0,10),
+        amount: Number(p.amount),
+        method: p.method || 'CARD',
+        status: String(p.status).toUpperCase() === 'PAID' ? 'Completed' : String(p.status).charAt(0).toUpperCase() + String(p.status).slice(1),
+        description: p.booking?.description,
+      }));
+      setItems(mapped);
+    };
+    run();
+  }, []);
 
   return (
     <>
       <SafeAreaView style={styles.container}>
-              <Stack.Screen options={{ headerShown: false }} />
+        <Stack.Screen options={{ headerShown: false }} />
 
         {/* Top Navigation */}
         <View style={styles.topNav}>
@@ -52,7 +56,7 @@ export default function PaymentHistory() {
 
         <Text style={styles.title}>Payment History</Text>
         <FlatList
-          data={payments}
+          data={items}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.card}>
@@ -73,18 +77,18 @@ export default function PaymentHistory() {
                 <Text
                   style={[
                     styles.value,
-                    item.status === "Completed"
-                      ? styles.completed
-                      : styles.refunded,
+                    item.status === "Completed" ? styles.completed : styles.refunded,
                   ]}
                 >
                   {item.status}
                 </Text>
               </View>
-              <View style={styles.row}>
-                <Text style={styles.label}>Description:</Text>
-                <Text style={styles.value}>{item.description}</Text>
-              </View>
+              {item.description ? (
+                <View style={styles.row}>
+                  <Text style={styles.label}>Description:</Text>
+                  <Text style={styles.value}>{item.description}</Text>
+                </View>
+              ) : null}
             </View>
           )}
           ListEmptyComponent={

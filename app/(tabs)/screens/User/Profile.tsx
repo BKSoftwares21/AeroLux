@@ -1,20 +1,106 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router, Stack } from "expo-router";
-import React, { useState } from "react";
-import { Alert, Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Alert, Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from "react-native";
+import { session } from "../../../store/session";
 
 export default function UserProfileScreen() {
-  const [name, setName] = useState("Benita Kazadi");
-  const [email, setEmail] = useState("benita@example.com");
-  const [phone, setPhone] = useState("+267 712 3456");
-  const [dob, setDob] = useState<Date | undefined>(new Date(2000, 0, 1));
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dob, setDob] = useState<Date | undefined>(undefined);
   const [showPicker, setShowPicker] = useState(false);
-  const [idOrPassport, setIdOrPassport] = useState("A1234567");
+  const [idOrPassport, setIdOrPassport] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    Alert.alert("Profile Updated", "Your details have been successfully updated!");
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      const user = session.user || await session.refreshProfile();
+      
+      if (user) {
+        setName(user.full_name || "");
+        setEmail(user.email || "");
+        setPhone(user.phone || "");
+        setIdOrPassport(user.id_or_passport || "");
+        
+        // Parse date of birth
+        if (user.date_of_birth) {
+          const parsedDate = new Date(user.date_of_birth);
+          if (!isNaN(parsedDate.getTime())) {
+            setDob(parsedDate);
+          }
+        }
+      } else {
+        Alert.alert("Error", "Please log in to view your profile", [
+          { text: "OK", onPress: () => router.replace("/auth/login") }
+        ]);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to load profile. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSave = async () => {
+    if (!session.user) {
+      Alert.alert("Error", "Please log in to update your profile");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      
+      const updates = {
+        full_name: name.trim(),
+        phone: phone.trim() || null,
+        date_of_birth: dob ? dob.toISOString().split('T')[0] : null,
+        id_or_passport: idOrPassport.trim() || null,
+      };
+
+      await session.updateProfile(updates);
+      Alert.alert("Success", "Your profile has been updated successfully!");
+      
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to update profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Logout", 
+          style: "destructive",
+          onPress: () => {
+            session.logout();
+            router.replace("/auth/login");
+          }
+        }
+      ]
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#FFD700" />
+        <Text style={{ color: '#FFD700', marginTop: 10 }}>Loading profile...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -46,13 +132,14 @@ export default function UserProfileScreen() {
         placeholderTextColor="#ccc"
         value={name}
         onChangeText={setName}
+        editable={!saving}
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { opacity: 0.5 }]}
         placeholder="Email"
         placeholderTextColor="#ccc"
         value={email}
-        onChangeText={setEmail}
+        editable={false}
       />
       <TextInput
         style={styles.input}
@@ -60,6 +147,7 @@ export default function UserProfileScreen() {
         placeholderTextColor="#ccc"
         value={phone}
         onChangeText={setPhone}
+        editable={!saving}
       />
 
       {/* Date of Birth */}
@@ -107,16 +195,25 @@ export default function UserProfileScreen() {
         placeholderTextColor="#ccc"
         value={idOrPassport}
         onChangeText={setIdOrPassport}
+        editable={!saving}
       />
 
       {/* Save Button */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Ionicons name="save-outline" size={20} color="#0A1A2F" />
-        <Text style={styles.saveText}>Save Changes</Text>
+      <TouchableOpacity 
+        style={[styles.saveButton, saving && { opacity: 0.5 }]} 
+        onPress={handleSave}
+        disabled={saving}
+      >
+        {saving ? (
+          <ActivityIndicator size="small" color="#0A1A2F" />
+        ) : (
+          <Ionicons name="save-outline" size={20} color="#0A1A2F" />
+        )}
+        <Text style={styles.saveText}>{saving ? "Saving..." : "Save Changes"}</Text>
       </TouchableOpacity>
 
       {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={20} color="#FFD700" />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>

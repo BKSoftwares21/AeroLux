@@ -1,5 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
+import * as FileSystem from "expo-file-system";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -10,19 +11,9 @@ import {
   View,
 } from "react-native";
 import AdminLayout from "../../../../components/AdminLayout";
+import { api, type Flight as ApiFlight } from "../../../services/api";
 
-interface Flight {
-  id: number;
-  flightNumber: string;
-  airline: string;
-  departure: string;
-  arrival: string;
-  date: string;
-  time: string;
-  price: number;
-  imageUrl?: string;
-  isFirstClass: boolean;
-}
+type Flight = ApiFlight;
 
 export default function AdminFlightsScreen() {
   const [flights, setFlights] = useState<Flight[]>([]);
@@ -59,55 +50,88 @@ export default function AdminFlightsScreen() {
       quality: 0.7,
     });
     if (!result.canceled && result.assets?.length) {
-      setImageUrl(result.assets[0].uri);
+      const asset = result.assets[0];
+      try {
+        const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' as any });
+        const mime = (asset as any).mimeType || 'image/jpeg';
+        const data = `data:${mime};base64,${base64}`;
+        const uploaded = await api.uploadImage({ data, filename: (asset as any).fileName || 'flight' });
+        setImageUrl(uploaded.url);
+      } catch {
+        // fallback to local preview
+        setImageUrl(asset.uri);
+      }
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!flightNumber || !airline || !departure || !arrival || !price) return;
 
     if (editingFlight) {
-      setFlights((prev) =>
-        prev.map((f) =>
-          f.id === editingFlight.id
-            ? { ...f, flightNumber, airline, departure, arrival, date, time, price: +price, imageUrl, isFirstClass }
-            : f
-        )
-      );
-    } else {
-      const newFlight: Flight = {
-        id: flights.length + 1,
-        flightNumber,
+      await api.updateFlight(editingFlight.id, {
+        flight_number: flightNumber,
         airline,
         departure,
         arrival,
         date,
         time,
         price: +price,
-        imageUrl,
-        isFirstClass,
-      };
-      setFlights([...flights, newFlight]);
+        image_url: imageUrl,
+        is_first_class: isFirstClass,
+      });
+    } else {
+      await api.createFlight({
+        flight_number: flightNumber,
+        airline,
+        departure,
+        arrival,
+        date,
+        time,
+        price: +price,
+        image_url: imageUrl,
+        is_first_class: isFirstClass,
+      });
     }
+    await load();
     resetForm();
   };
 
   const handleEdit = (flight: Flight) => {
     setEditingFlight(flight);
-    setFlightNumber(flight.flightNumber);
+    setFlightNumber((flight as any).flight_number || (flight as any).flightNumber || "");
     setAirline(flight.airline);
     setDeparture(flight.departure);
     setArrival(flight.arrival);
-    setDate(flight.date);
-    setTime(flight.time);
-    setPrice(flight.price.toString());
-    setImageUrl(flight.imageUrl);
-    setIsFirstClass(flight.isFirstClass);
+    setDate(typeof flight.date === 'string' ? flight.date : new Date(flight.date as any).toISOString().slice(0,10));
+    setTime((flight as any).time || "");
+    setPrice(String(flight.price));
+    setImageUrl((flight as any).image_url || (flight as any).imageUrl);
+    setIsFirstClass(Boolean((flight as any).is_first_class ?? (flight as any).isFirstClass));
   };
 
-  const handleDelete = (id: number) => {
-    setFlights((prev) => prev.filter((f) => f.id !== id));
+  const handleDelete = async (id: number) => {
+    await api.deleteFlight(id);
+    await load();
   };
+
+  useEffect(() => { load(); }, []);
+
+  async function load() {
+    const { flights } = await api.listFlights();
+    const mapped = (flights || []).map((f: any) => ({
+      id: f.id,
+      flight_number: f.flightNumber || f.flight_number,
+      airline: f.airline,
+      departure: f.departure,
+      arrival: f.arrival,
+      date: new Date(f.date).toISOString().slice(0,10),
+      time: f.time || '',
+      price: Number(f.price),
+      image_url: f.imageUrl || f.image_url,
+      is_first_class: f.isFirstClass ?? f.is_first_class,
+    }));
+    setFlights(mapped as any);
+  }
 
   return (
     <AdminLayout>
@@ -157,12 +181,12 @@ export default function AdminFlightsScreen() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            {item.imageUrl && <Image source={{ uri: item.imageUrl }} style={styles.flightImage} />}
-            <Text style={styles.cardText}>{item.flightNumber} • {item.airline}</Text>
+            {(item as any).image_url && <Image source={{ uri: (item as any).image_url }} style={styles.flightImage} />}
+            <Text style={styles.cardText}>{(item as any).flight_number} • {item.airline}</Text>
             <Text style={styles.cardSub}>{item.departure} → {item.arrival}</Text>
-            <Text style={styles.cardSub}>{item.date} at {item.time}</Text>
-            <Text style={styles.cardSub}>${item.price.toFixed(2)}</Text>
-            <Text style={styles.cardSub}>{item.isFirstClass ? "First Class" : "Economy"}</Text>
+            <Text style={styles.cardSub}>{(item as any).date} {item.time ? `at ${item.time}` : ''}</Text>
+            <Text style={styles.cardSub}>${Number(item.price).toFixed(2)}</Text>
+            <Text style={styles.cardSub}>{((item as any).is_first_class) ? "First Class" : "Economy"}</Text>
 
             <View style={styles.cardActions}>
               <TouchableOpacity style={styles.editButton} onPress={() => handleEdit(item)}>

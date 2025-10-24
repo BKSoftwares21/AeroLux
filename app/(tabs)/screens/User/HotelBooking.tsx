@@ -1,4 +1,4 @@
-import { router, Stack } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import React from "react";
 import {
   Image,
@@ -10,16 +10,19 @@ import {
 } from "react-native";
 
 export default function HotelBookingScreen({ route }: any) {
-  const { hotel } = route?.params || {
-    hotel: {
-      name: "Ocean View Resort",
-      location: "The Bahamas",
-      description: "Relax and unwind at our luxurious seaside resort.",
-      pricePerNight: 300,
-      rating: 5,
-      bedType: "King",
-      imageUri: require("../../../../assets/images/hotel-sample.jpg"),
-    },
+  const params = useLocalSearchParams<{ type?: string; payload?: string }>();
+  let parsed: any = null;
+  if (params?.payload && typeof params.payload === 'string') {
+    try { parsed = JSON.parse(params.payload); } catch {}
+  }
+  const hotel = parsed || route?.params?.hotel || {
+    name: "Ocean View Resort",
+    location: "The Bahamas",
+    description: "Relax and unwind at our luxurious seaside resort.",
+    pricePerNight: 300,
+    rating: 5,
+    bedType: "King",
+    imageUri: require("../../../../assets/images/hotel-sample.jpg"),
   };
 
   const handleBook = () => {
@@ -52,26 +55,34 @@ export default function HotelBookingScreen({ route }: any) {
         />
 
         <Text style={styles.title}>{hotel.name}</Text>
-        <Text style={styles.subTitle}>{hotel.location}</Text>
+        <Text style={styles.subTitle}>{hotel.location || (hotel.city && hotel.country ? `${hotel.city}, ${hotel.country}` : '')}</Text>
 
         <View style={styles.separator} />
 
-        <Text style={styles.description}>{hotel.description}</Text>
+        {hotel.description ? (
+          <Text style={styles.description}>{hotel.description}</Text>
+        ) : null}
 
-        <View style={styles.detailsContainer}>
-          <Text style={styles.detailLabel}>Bed Type:</Text>
-          <Text style={styles.detailValue}>{hotel.bedType}</Text>
-        </View>
+        {hotel.bedType ? (
+          <View style={styles.detailsContainer}>
+            <Text style={styles.detailLabel}>Bed Type:</Text>
+            <Text style={styles.detailValue}>{hotel.bedType}</Text>
+          </View>
+        ) : null}
 
-        <View style={styles.detailsContainer}>
-          <Text style={styles.detailLabel}>Rating:</Text>
-          <Text style={styles.detailValue}>⭐ {hotel.rating}</Text>
-        </View>
+        {hotel.rating || hotel.star_rating ? (
+          <View style={styles.detailsContainer}>
+            <Text style={styles.detailLabel}>Rating:</Text>
+            <Text style={styles.detailValue}>⭐ {hotel.rating ?? hotel.star_rating}</Text>
+          </View>
+        ) : null}
 
-        <View style={styles.detailsContainer}>
-          <Text style={styles.detailLabel}>Price per Night:</Text>
-          <Text style={styles.price}>${hotel.pricePerNight}</Text>
-        </View>
+        {hotel.pricePerNight ? (
+          <View style={styles.detailsContainer}>
+            <Text style={styles.detailLabel}>Price per Night:</Text>
+            <Text style={styles.price}>${hotel.pricePerNight}</Text>
+          </View>
+        ) : null}
 
         <TouchableOpacity style={styles.bookButton} onPress={handleBook}>
           <Text style={styles.bookText}>Book Now</Text>
@@ -79,7 +90,7 @@ export default function HotelBookingScreen({ route }: any) {
 
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.push('/screens/User/SearchScreen')}
+          onPress={() => router.push('/(tabs)/screens/User/SearchScreen')}
         >
           <Text style={styles.backText}>Back to Search</Text>
         </TouchableOpacity>

@@ -1,9 +1,9 @@
 // screens/Search.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { api, type Hotel } from "../../../services/api";
+import { api, type Hotel, type Flight } from "../../../services/api";
 import UserModal from './UserModal';
 export default function Search() {
 
@@ -11,22 +11,46 @@ export default function Search() {
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
   const [available, setAvailable] = useState(false);
-  const [results, setResults] = useState<Hotel[]>([]);
+  type SearchItem = ({ __type: 'hotel' } & Hotel) | ({ __type: 'flight' } & Flight);
+  const [results, setResults] = useState<SearchItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<'both'|'hotels'|'flights'>('both');
 
-  const runSearch = async () => {
+  const runSearch = useCallback(async () => {
     try {
       setLoading(true);
-      const { hotels } = await api.searchHotels({ name, city, available: available ? 1 : undefined });
-      setResults(hotels);
-    } catch (e) {
+      const items: SearchItem[] = [] as any;
+      if (mode === 'both' || mode === 'hotels') {
+        const { hotels } = await api.searchHotels({ name, city, available: available ? 1 : undefined });
+        items.push(...(hotels || []).map((h: any) => ({ __type: 'hotel', ...h })));
+      }
+      if (mode === 'both' || mode === 'flights') {
+        const q = name || city || undefined;
+        const { flights } = await api.searchFlights({ q, departure: city || undefined });
+        const mapped = (flights || []).map((f: any) => ({
+          __type: 'flight',
+          id: f.id,
+          flight_number: f.flightNumber || f.flight_number,
+          airline: f.airline,
+          departure: f.departure,
+          arrival: f.arrival,
+          date: new Date(f.date).toISOString().slice(0,10),
+          time: f.time,
+          price: Number(f.price),
+          image_url: f.imageUrl || f.image_url,
+          is_first_class: f.isFirstClass ?? f.is_first_class,
+        }));
+        items.push(...mapped as any);
+      }
+      setResults(items);
+    } catch {
       // noop
     } finally {
       setLoading(false);
     }
-  };
+  }, [name, city, available, mode]);
 
-  useEffect(() => { runSearch(); }, []);
+  useEffect(() => { runSearch(); }, [runSearch]);
 
   return (
     <> 
@@ -48,6 +72,19 @@ export default function Search() {
         </View>
 
         <Text style={styles.title}>Search</Text>
+
+        {/* Mode toggle */}
+        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+          <TouchableOpacity onPress={() => setMode('both')} style={[styles.pill, mode==='both' && styles.pillActive]}>
+            <Text style={[styles.pillText, mode==='both' && styles.pillTextActive]}>Both</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setMode('hotels')} style={[styles.pill, mode==='hotels' && styles.pillActive]}>
+            <Text style={[styles.pillText, mode==='hotels' && styles.pillTextActive]}>Hotels</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setMode('flights')} style={[styles.pill, mode==='flights' && styles.pillActive]}>
+            <Text style={[styles.pillText, mode==='flights' && styles.pillTextActive]}>Flights</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Search Inputs */}
         <View style={styles.searchContainer}>
@@ -81,14 +118,54 @@ export default function Search() {
         {/* Results List */}
         <FlatList
           data={results}
-          keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>{item.name}</Text>
-              <Text style={styles.cardSubtitle}>{item.city}, {item.country}</Text>
-              {item.description ? <Text style={styles.cardSubtitle}>{item.description}</Text> : null}
-            </View>
-          )}
+          keyExtractor={(item) => `${item.__type}-${item.id}`}
+          renderItem={({ item }) => {
+            const onPress = () => {
+              if (item.__type === 'hotel') {
+                const payload = JSON.stringify({
+                  name: (item as any).name,
+                  location: `${(item as any).city}, ${(item as any).country}`,
+                  description: (item as any).description || '',
+                  rating: (item as any).star_rating ?? (item as any).starRating ?? undefined,
+                  // image url stored under amenities.imageUrl
+                  imageUri: (item as any).amenities?.imageUrl || undefined,
+                });
+                router.push({ pathname: '/(tabs)/screens/User/HotelBooking', params: { type: 'hotel', payload } });
+              } else {
+                const payload = JSON.stringify({
+                  flightNumber: (item as any).flight_number,
+                  airline: (item as any).airline,
+                  departure: (item as any).departure,
+                  arrival: (item as any).arrival,
+                  date: (item as any).date,
+                  time: (item as any).time,
+                  price: (item as any).price,
+                  imageUri: (item as any).image_url || undefined,
+                  isFirstClass: (item as any).is_first_class ?? false,
+                });
+                router.push({ pathname: '/(tabs)/screens/User/FlightBooking', params: { type: 'flight', payload } });
+              }
+            };
+            return (
+              <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+                <View style={styles.card}>
+                  {item.__type === 'hotel' ? (
+                    <>
+                      <Text style={styles.cardTitle}>{(item as any).name}</Text>
+                      <Text style={styles.cardSubtitle}>{(item as any).city}, {(item as any).country}</Text>
+                      {(item as any).description ? <Text style={styles.cardSubtitle}>{(item as any).description}</Text> : null}
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.cardTitle}>{(item as any).airline} • {(item as any).flight_number}</Text>
+                      <Text style={styles.cardSubtitle}>{(item as any).departure} → {(item as any).arrival}</Text>
+                      <Text style={styles.cardSubtitle}>{(item as any).date}{(item as any).time ? ` at ${(item as any).time}` : ''} • ${(item as any).price}</Text>
+                    </>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          }}
         />
 
         {/* Bottom Navigation */}
@@ -177,6 +254,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
+  },
+  pill: {
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  pillActive: {
+    backgroundColor: '#D4AF37',
+  },
+  pillText: {
+    color: '#D4AF37',
+    fontWeight: 'bold',
+  },
+  pillTextActive: {
+    color: '#0A1A2F',
   },
   cardTitle: {
     fontSize: 18,

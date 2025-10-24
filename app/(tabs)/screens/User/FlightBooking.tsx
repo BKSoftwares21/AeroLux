@@ -1,19 +1,22 @@
-import { router, Stack } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 export default function FlightBooking({ route }: any) {
-  const { flight } = route?.params || {
-    flight: {
-      flightNumber: "ALX452",
-      airline: "AeroLux Airlines",
-      departure: "Johannesburg",
-      arrival: "Paris",
-      date: "2025-10-25",
-      time: "14:30",
-      price: 899,
-      imageUri: require("../../../../assets/images/OIP.jpg"),
-      isFirstClass: true,
-    },
+  const params = useLocalSearchParams<{ type?: string; payload?: string }>();
+  let parsed: any = null;
+  if (params?.payload && typeof params.payload === 'string') {
+    try { parsed = JSON.parse(params.payload); } catch {}
+  }
+  const flight = parsed || route?.params?.flight || {
+    flightNumber: "ALX452",
+    airline: "AeroLux Airlines",
+    departure: "Johannesburg",
+    arrival: "Paris",
+    date: "2025-10-25",
+    time: "14:30",
+    price: 899,
+    imageUri: require("../../../../assets/images/OIP.jpg"),
+    isFirstClass: true,
   };
 
   const handleBook = () => {
@@ -46,7 +49,7 @@ export default function FlightBooking({ route }: any) {
         />
 
         <Text style={styles.title}>{flight.airline}</Text>
-        <Text style={styles.subTitle}>Flight: {flight.flightNumber}</Text>
+        <Text style={styles.subTitle}>Flight: {flight.flightNumber ?? flight.flight_number}</Text>
 
         <View style={styles.detailsContainer}>
           <Text style={styles.detailLabel}>From:</Text>

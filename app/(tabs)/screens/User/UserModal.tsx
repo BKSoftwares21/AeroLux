@@ -1,9 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef } from "react";
-import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, Dimensions, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-const { height } = require("react-native").Dimensions.get("window");
+const { height } = Dimensions.get("window");
 
 type UserModalProps = {
   visible: boolean;
@@ -29,7 +29,7 @@ export default function UserModal({ visible, onClose, children }: UserModalProps
         useNativeDriver: true,
       }).start();
     }
-  }, [visible]);
+  }, [visible, slideAnim]);
 
   const handleClose = () => {
     Animated.timing(slideAnim, {

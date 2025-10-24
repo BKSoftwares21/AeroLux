@@ -1,6 +1,10 @@
-import { prisma } from '../lib/prisma';
-import { BookingType, BookingStatus, PaymentStatus, Role } from '../generated/prisma';
-import bcrypt from 'bcryptjs';
+// Mock database services for React Native compatibility
+// Rewritten to avoid server-side `prisma` / `bcrypt` usage and use in-memory mocks.
+
+export type BookingType = 'FLIGHT' | 'HOTEL';
+export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+export type PaymentStatus = 'UNPAID' | 'PAID';
+export type Role = 'USER' | 'ADMIN';
 
 export type User = {
   id: number;
@@ -17,6 +21,7 @@ export type Hotel = {
   country: string;
   description?: string | null;
   star_rating?: number | null;
+  amenities?: Record<string, any>;
 };
 
 export type Booking = {
@@ -30,307 +35,325 @@ export type Booking = {
   status: BookingStatus;
   paymentStatus: PaymentStatus;
   metadata?: Record<string, any>;
+  hotelId?: number;
 };
 
-// Auth Services
+// --- In-memory mock data ---
+type MockUser = {
+  id: number;
+  email: string;
+  password: string;
+  full_name: string;
+  phone: string | null;
+  role: 'admin' | 'user';
+  created_at: string;
+  updated_at: string;
+};
+
+let mockUsers: MockUser[] = [
+  {
+    id: 1,
+    email: 'admin@aerolux.com',
+    password: 'password123', // Only for mock auth flows
+    full_name: 'Admin User',
+    phone: '+1234567890',
+    role: 'admin',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 2,
+    email: 'user@example.com',
+    password: 'password123',
+    full_name: 'John Doe',
+    phone: '+1987654321',
+    role: 'user',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+  },
+];
+
+let mockHotels: (Hotel & { id: number })[] = [
+  {
+    id: 1,
+    name: 'Grand Luxury Hotel Paris',
+    city: 'Paris',
+    country: 'France',
+    description: 'A beautiful luxury hotel in the heart of Paris',
+    star_rating: 5,
+    amenities: { wifi: true, pool: true, spa: true, gym: true, restaurant: true },
+  },
+  {
+    id: 2,
+    name: 'New York Plaza',
+    city: 'New York',
+    country: 'USA',
+    description: 'Iconic hotel in Manhattan',
+    star_rating: 4,
+    amenities: { wifi: true, pool: false, spa: true, gym: true, restaurant: true },
+  },
+  {
+    id: 3,
+    name: 'Tokyo Gardens Resort',
+    city: 'Tokyo',
+    country: 'Japan',
+    description: 'Modern resort with traditional Japanese elements',
+    star_rating: 5,
+    amenities: { wifi: true, pool: true, spa: true, gym: true, restaurant: true },
+  },
+];
+
+let mockBookings: any[] = [
+  {
+    id: '1',
+    userId: 2,
+    type: 'FLIGHT' as BookingType,
+    reference: 'FL123456',
+    date: '2025-12-01',
+    amount: 299.99,
+    description: 'Flight to Paris',
+    status: 'COMPLETED' as BookingStatus,
+    paymentStatus: 'PAID' as PaymentStatus,
+    metadata: { departure: 'JFK', arrival: 'CDG', class: 'economy' },
+  },
+  {
+    id: '2',
+    userId: 2,
+    type: 'HOTEL' as BookingType,
+    reference: 'HT789012',
+    date: '2025-12-02',
+    amount: 450.0,
+    description: 'Hotel booking in Paris',
+    status: 'CONFIRMED' as BookingStatus,
+    paymentStatus: 'PAID' as PaymentStatus,
+    hotelId: 1,
+    metadata: { nights: 3, rooms: 1, guests: 2 },
+  },
+  {
+    id: '3',
+    userId: 2,
+    type: 'FLIGHT' as BookingType,
+    reference: 'FL345678',
+    date: '2025-11-15',
+    amount: 599.99,
+    description: 'Flight to Tokyo',
+    status: 'PENDING' as BookingStatus,
+    paymentStatus: 'UNPAID' as PaymentStatus,
+    metadata: { departure: 'LAX', arrival: 'NRT', class: 'business' },
+  },
+];
+
+let mockNotifications = [
+  {
+    id: 1,
+    userId: 2,
+    title: 'Booking Confirmed',
+    body: 'Your hotel booking in Paris has been confirmed!',
+    is_read: 0,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 2,
+    userId: 2,
+    title: 'Payment Reminder',
+    body: "Don't forget to complete payment for your Tokyo flight.",
+    is_read: 0,
+    created_at: new Date().toISOString(),
+  },
+];
+
+// Helper to simulate delay
+const delay = (ms = 300) => new Promise(res => setTimeout(res, ms));
+const nextId = (arr: any[]) => (arr.length ? Math.max(...arr.map((x:any)=> x.id)) + 1 : 1);
+
+// --- Auth Services (mocked) ---
 export const authService = {
   async signup(data: { email: string; password: string; full_name: string; phone?: string }) {
-    const hashedPassword = await bcrypt.hash(data.password, 12);
-    const user = await prisma.user.create({
-      data: {
-        email: data.email,
-        password: hashedPassword,
-        fullName: data.full_name,
-        phone: data.phone,
-      },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        phone: true,
-        role: true,
-      },
-    });
-    
+    await delay();
+    const existingUser = mockUsers.find(u => u.email === data.email);
+    if (existingUser) throw new Error('User already exists');
+    const newUser: MockUser = {
+      id: mockUsers.length + 1,
+      email: data.email,
+      password: data.password,
+      full_name: data.full_name,
+      phone: data.phone ?? null,
+      role: 'user',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    mockUsers.push(newUser);
     return {
       user: {
-        id: user.id,
-        email: user.email,
-        full_name: user.fullName,
-        phone: user.phone,
-        role: user.role.toLowerCase() as 'user' | 'admin',
+        id: newUser.id,
+        email: newUser.email,
+        full_name: newUser.full_name,
+        phone: newUser.phone,
+        role: newUser.role,
       },
     };
   },
 
   async login(email: string, password: string) {
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new Error('Invalid credentials');
-    }
-
+    await delay();
+    const user = mockUsers.find(u => u.email === email);
+    if (!user || user.password !== password) throw new Error('Invalid credentials');
     return {
       user: {
         id: user.id,
         email: user.email,
-        full_name: user.fullName,
+        full_name: user.full_name,
         phone: user.phone,
-        role: user.role.toLowerCase() as 'user' | 'admin',
+        role: user.role,
       },
     };
   },
 
   async forgotPassword(email: string) {
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // In a real app, you'd send an email with a reset code
-    // For demo purposes, return a test code
+    await delay();
+    const user = mockUsers.find(u => u.email === email);
+    if (!user) throw new Error('User not found');
     return { ok: true, test_code: '123456' };
   },
 
   async resetPassword(email: string, code: string, new_password: string) {
-    // In a real app, you'd verify the reset code
-    if (code !== '123456') {
-      throw new Error('Invalid reset code');
-    }
-
-    const hashedPassword = await bcrypt.hash(new_password, 12);
-    await prisma.user.update({
-      where: { email },
-      data: { password: hashedPassword },
-    });
-
+    await delay();
+    if (code !== '123456') throw new Error('Invalid reset code');
+    const user = mockUsers.find(u => u.email === email);
+    if (user) user.password = new_password;
     return { ok: true };
   },
 };
 
-// Hotel Services
+// --- Hotel Services (in-memory) ---
 export const hotelService = {
   async listHotels() {
-    const hotels = await prisma.hotel.findMany();
+    await delay();
     return {
-      hotels: hotels.map(h => ({
+      hotels: mockHotels.map(h => ({
         id: h.id,
         name: h.name,
         city: h.city,
         country: h.country,
         description: h.description,
-        star_rating: h.starRating,
+        star_rating: h.star_rating,
       })),
     };
   },
 
-  async createHotel(data: { name: string; city: string; country: string; description?: string; star_rating: number; amenities?: any }) {
-    const hotel = await prisma.hotel.create({
-      data: {
-        name: data.name,
-        city: data.city,
-        country: data.country,
-        description: data.description,
-        starRating: data.star_rating,
-        amenities: data.amenities,
-      },
-    });
-
-    return {
-      hotel: {
-        id: hotel.id,
-        name: hotel.name,
-        city: hotel.city,
-        country: hotel.country,
-        description: hotel.description,
-        star_rating: hotel.starRating,
-      },
+  async createHotel(data: { name: string; city: string; country: string; description?: string; star_rating?: number; amenities?: any }) {
+    await delay();
+    const id = nextId(mockHotels);
+    const hotel = {
+      id,
+      name: data.name,
+      city: data.city,
+      country: data.country,
+      description: data.description ?? null,
+      star_rating: data.star_rating ?? null,
+      amenities: data.amenities ?? {},
     };
+    mockHotels.push(hotel);
+    return { hotel: { id: hotel.id, name: hotel.name, city: hotel.city, country: hotel.country, description: hotel.description, star_rating: hotel.star_rating } };
   },
 
   async updateHotel(id: number, data: Partial<{ name: string; city: string; country: string; description: string; star_rating: number; amenities: any }>) {
-    const hotel = await prisma.hotel.update({
-      where: { id },
-      data: {
-        name: data.name,
-        city: data.city,
-        country: data.country,
-        description: data.description,
-        starRating: data.star_rating,
-        amenities: data.amenities,
-      },
-    });
-
-    return {
-      hotel: {
-        id: hotel.id,
-        name: hotel.name,
-        city: hotel.city,
-        country: hotel.country,
-        description: hotel.description,
-        star_rating: hotel.starRating,
-      },
-    };
+    await delay();
+    const idx = mockHotels.findIndex(h => h.id === id);
+    if (idx === -1) throw new Error('Hotel not found');
+    mockHotels[idx] = { ...mockHotels[idx], ...data };
+    const h = mockHotels[idx];
+    return { hotel: { id: h.id, name: h.name, city: h.city, country: h.country, description: h.description, star_rating: h.star_rating } };
   },
 
   async deleteHotel(id: number) {
-    await prisma.hotel.delete({
-      where: { id },
-    });
+    await delay();
+    mockHotels = mockHotels.filter(h => h.id !== id);
     return { ok: true };
   },
 
   async searchHotels(query: { name?: string; city?: string; country?: string }) {
-    const hotels = await prisma.hotel.findMany({
-      where: {
-        ...(query.name && { name: { contains: query.name, mode: 'insensitive' } }),
-        ...(query.city && { city: { contains: query.city, mode: 'insensitive' } }),
-        ...(query.country && { country: { contains: query.country, mode: 'insensitive' } }),
-      },
-    });
-
-    return {
-      hotels: hotels.map(h => ({
-        id: h.id,
-        name: h.name,
-        city: h.city,
-        country: h.country,
-        description: h.description,
-        star_rating: h.starRating,
-      })),
-    };
+    await delay();
+    const q = (str?: string) => (str ?? '').toLowerCase();
+    const results = mockHotels.filter(h =>
+      (!query.name || q(h.name).includes(q(query.name))) &&
+      (!query.city || q(h.city).includes(q(query.city))) &&
+      (!query.country || q(h.country).includes(q(query.country)))
+    );
+    return { hotels: results.map(h => ({ id: h.id, name: h.name, city: h.city, country: h.country, description: h.description, star_rating: h.star_rating })) };
   },
 };
 
-// User Services
+// --- User Services (in-memory) ---
 export const userService = {
   async listUsers() {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        phone: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
+    await delay();
     return {
-      users: users.map(u => ({
+      users: mockUsers.map(u => ({
         id: u.id,
         email: u.email,
-        full_name: u.fullName,
-        phone: u.phone,
-        role: u.role.toLowerCase() as 'user' | 'admin',
-        created_at: u.createdAt.toISOString(),
-        updated_at: u.updatedAt.toISOString(),
+        full_name: u.full_name,
+        phone: u.phone ?? null,
+        role: u.role,
+        created_at: u.created_at,
+        updated_at: u.updated_at,
       })),
     };
   },
 
   async createUser(data: { email: string; password: string; full_name: string; phone?: string; role?: 'user' | 'admin' }) {
-    const hashedPassword = await bcrypt.hash(data.password, 12);
-    const user = await prisma.user.create({
-      data: {
-        email: data.email,
-        password: hashedPassword,
-        fullName: data.full_name,
-        phone: data.phone,
-        role: data.role?.toUpperCase() as Role || 'USER',
-      },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        phone: true,
-        role: true,
-      },
-    });
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        full_name: user.fullName,
-        phone: user.phone,
-        role: user.role.toLowerCase() as 'user' | 'admin',
-      },
+    await delay();
+    const exists = mockUsers.find(u => u.email === data.email);
+    if (exists) throw new Error('User already exists');
+    const id = nextId(mockUsers);
+    const user: MockUser = {
+      id,
+      email: data.email,
+      password: data.password,
+      full_name: data.full_name,
+      phone: data.phone ?? null,
+      role: data.role ?? 'user',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
+    mockUsers.push(user);
+    return { user: { id: user.id, email: user.email, full_name: user.full_name, phone: user.phone, role: user.role } };
   },
 
   async updateUser(id: number, data: Partial<{ email: string; password: string; full_name: string; phone?: string; role: 'user'|'admin' }>) {
-    const updateData: any = {
-      ...(data.email && { email: data.email }),
-      ...(data.full_name && { fullName: data.full_name }),
-      ...(data.phone !== undefined && { phone: data.phone }),
-      ...(data.role && { role: data.role.toUpperCase() as Role }),
-    };
-
-    if (data.password) {
-      updateData.password = await bcrypt.hash(data.password, 12);
-    }
-
-    const user = await prisma.user.update({
-      where: { id },
-      data: updateData,
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        phone: true,
-        role: true,
-      },
-    });
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        full_name: user.fullName,
-        phone: user.phone,
-        role: user.role.toLowerCase() as 'user' | 'admin',
-      },
-    };
+    await delay();
+    const idx = mockUsers.findIndex(u => u.id === id);
+    if (idx === -1) throw new Error('User not found');
+    const updated = { ...mockUsers[idx], ...data, updated_at: new Date().toISOString() } as any;
+    if (data.password) updated.password = data.password;
+    mockUsers[idx] = updated;
+    return { user: { id: updated.id, email: updated.email, full_name: updated.full_name, phone: updated.phone, role: updated.role } };
   },
 
   async deleteUser(id: number) {
-    await prisma.user.delete({
-      where: { id },
-    });
+    await delay();
+    mockUsers = mockUsers.filter(u => u.id !== id);
     return { ok: true };
   },
 };
 
-// Booking Services
+// --- Booking Services (in-memory) ---
 export const bookingService = {
   async getUserBookings(userId: number) {
-    const bookings = await prisma.booking.findMany({
-      where: { userId },
-      include: {
-        hotel: true,
-        payment: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return bookings.map(b => ({
+    await delay();
+    const bookings = mockBookings.filter(b => Number(b.userId) === Number(userId));
+    return bookings.map((b:any) => ({
       id: b.id,
-      userId: b.userId.toString(),
+      userId: String(b.userId),
       type: b.type,
       reference: b.reference,
-      date: b.date.toISOString().split('T')[0],
+      date: String(b.date),
       amount: b.amount,
       description: b.description,
       status: b.status,
       paymentStatus: b.paymentStatus,
-      metadata: b.metadata as Record<string, any> || {},
+      metadata: b.metadata || {},
+      hotelId: b.hotelId,
     }));
   },
 
@@ -344,140 +367,125 @@ export const bookingService = {
     hotelId?: number;
     metadata?: Record<string, any>;
   }) {
-    const booking = await prisma.booking.create({
-      data: {
-        userId: data.userId,
-        type: data.type,
-        reference: data.reference,
-        date: new Date(data.date),
-        amount: data.amount,
-        description: data.description,
-        hotelId: data.hotelId,
-        metadata: data.metadata,
-      },
-    });
-
+    await delay();
+    const id = (Date.now() + Math.floor(Math.random()*1000)).toString();
+    const booking = {
+      id,
+      userId: data.userId,
+      type: data.type,
+      reference: data.reference,
+      date: data.date,
+      amount: data.amount,
+      description: data.description,
+      status: 'PENDING' as BookingStatus,
+      paymentStatus: 'UNPAID' as PaymentStatus,
+      metadata: data.metadata || {},
+      hotelId: data.hotelId,
+    };
+    mockBookings.unshift(booking);
     return {
       id: booking.id,
-      userId: booking.userId.toString(),
+      userId: String(booking.userId),
       type: booking.type,
       reference: booking.reference,
-      date: booking.date.toISOString().split('T')[0],
+      date: booking.date,
       amount: booking.amount,
       description: booking.description,
       status: booking.status,
       paymentStatus: booking.paymentStatus,
-      metadata: booking.metadata as Record<string, any> || {},
+      metadata: booking.metadata,
+      hotelId: booking.hotelId,
     };
   },
 
   async updateBookingStatus(id: string, status: BookingStatus) {
-    const booking = await prisma.booking.update({
-      where: { id },
-      data: { status },
-    });
-
+    await delay();
+    const idx = mockBookings.findIndex(b => b.id === id);
+    if (idx === -1) throw new Error('Booking not found');
+    mockBookings[idx].status = status;
     return {
-      id: booking.id,
-      userId: booking.userId.toString(),
-      type: booking.type,
-      reference: booking.reference,
-      date: booking.date.toISOString().split('T')[0],
-      amount: booking.amount,
-      description: booking.description,
-      status: booking.status,
-      paymentStatus: booking.paymentStatus,
-      metadata: booking.metadata as Record<string, any> || {},
+      id: mockBookings[idx].id,
+      userId: String(mockBookings[idx].userId),
+      type: mockBookings[idx].type,
+      reference: mockBookings[idx].reference,
+      date: mockBookings[idx].date,
+      amount: mockBookings[idx].amount,
+      description: mockBookings[idx].description,
+      status: mockBookings[idx].status,
+      paymentStatus: mockBookings[idx].paymentStatus,
+      metadata: mockBookings[idx].metadata || {},
     };
   },
 
   async markBookingPaid(id: string) {
-    const booking = await prisma.booking.update({
-      where: { id },
-      data: { 
-        paymentStatus: 'PAID',
-        status: 'COMPLETED',
-      },
-    });
-
+    await delay();
+    const idx = mockBookings.findIndex(b => b.id === id);
+    if (idx === -1) throw new Error('Booking not found');
+    mockBookings[idx].paymentStatus = 'PAID';
+    mockBookings[idx].status = 'COMPLETED';
     return {
-      id: booking.id,
-      userId: booking.userId.toString(),
-      type: booking.type,
-      reference: booking.reference,
-      date: booking.date.toISOString().split('T')[0],
-      amount: booking.amount,
-      description: booking.description,
-      status: booking.status,
-      paymentStatus: booking.paymentStatus,
-      metadata: booking.metadata as Record<string, any> || {},
+      id: mockBookings[idx].id,
+      userId: String(mockBookings[idx].userId),
+      type: mockBookings[idx].type,
+      reference: mockBookings[idx].reference,
+      date: mockBookings[idx].date,
+      amount: mockBookings[idx].amount,
+      description: mockBookings[idx].description,
+      status: mockBookings[idx].status,
+      paymentStatus: mockBookings[idx].paymentStatus,
+      metadata: mockBookings[idx].metadata || {},
     };
   },
 
   async deleteBooking(id: string) {
-    await prisma.booking.delete({
-      where: { id },
-    });
+    await delay();
+    mockBookings = mockBookings.filter(b => b.id !== id);
     return { ok: true };
   },
 };
 
-// Notification Services
+// --- Notification Services (in-memory) ---
 export const notificationService = {
   async getNotifications(params: { email?: string; user_id?: number }) {
-    let whereClause: any = {};
-
-    if (params.user_id) {
-      whereClause.userId = params.user_id;
-    } else if (params.email) {
-      const user = await prisma.user.findUnique({
-        where: { email: params.email },
-        select: { id: true },
-      });
-      if (user) {
-        whereClause.userId = user.id;
-      }
+    await delay();
+    let userId: number | undefined = undefined;
+    if (params.user_id) userId = params.user_id;
+    else if (params.email) {
+      const u = mockUsers.find(x => x.email === params.email);
+      if (u) userId = u.id;
     }
-
-    const notifications = await prisma.notification.findMany({
-      where: whereClause,
-      orderBy: { createdAt: 'desc' },
-    });
-
+    const results = mockNotifications
+      .filter(n => (userId ? n.userId === userId : true))
+      .sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     return {
-      notifications: notifications.map(n => ({
+      notifications: results.map(n => ({
         id: n.id,
         title: n.title,
         body: n.body,
-        is_read: n.isRead ? 1 : 0,
-        created_at: n.createdAt.toISOString(),
+        is_read: n.is_read ? 1 : 0,
+        created_at: n.created_at,
       })),
     };
   },
 
   async createNotification(userId: number, title: string, body: string) {
-    const notification = await prisma.notification.create({
-      data: {
-        userId,
-        title,
-        body,
-      },
-    });
-
+    await delay();
+    const id = nextId(mockNotifications);
+    const notification = { id, userId, title, body, is_read: 0, created_at: new Date().toISOString() };
+    mockNotifications.unshift(notification);
     return {
       id: notification.id,
       title: notification.title,
       body: notification.body,
-      is_read: notification.isRead ? 1 : 0,
-      created_at: notification.createdAt.toISOString(),
+      is_read: 0,
+      created_at: notification.created_at,
     };
   },
 
   async markNotificationRead(id: number) {
-    await prisma.notification.update({
-      where: { id },
-      data: { isRead: true },
-    });
+    await delay();
+    const idx = mockNotifications.findIndex(n => n.id === id);
+    if (idx !== -1) mockNotifications[idx].is_read = 1;
     return { ok: true };
   },
 };

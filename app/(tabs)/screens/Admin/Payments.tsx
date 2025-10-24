@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AdminLayout from "../../../../components/AdminLayout";
 
 interface Payment {
   id: number;
@@ -21,8 +22,6 @@ interface Payment {
     duration?: string;
   };
 }
-
-import AdminLayout from "../../../../components/AdminLayout";
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);

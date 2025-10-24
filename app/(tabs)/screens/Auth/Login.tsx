@@ -5,23 +5,29 @@ import { api } from "../../../services/api";
 import { session } from "../../../store/session";
 
 export default function Login() {
-  const [role, setRole] = useState<"user" | "admin">("user");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Error", "Please enter both email and password");
+      return;
+    }
+
     try {
       setLoading(true);
-      const { user } = await api.login({ email, password });
+      const { user } = await api.login({ email: email.trim(), password });
       session.setUser(user);
+      
+      // Navigate based on user's actual role from the server
       if (user.role === "admin") {
         router.push("/screens/Admin/AdminDashboardScreen");
       } else {
         router.push("/screens/User/Homescreen");
       }
     } catch (e: any) {
-      Alert.alert(e.message || "Login failed");
+      Alert.alert("Login Failed", e.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }
@@ -65,30 +71,15 @@ export default function Login() {
         onChangeText={setPassword}
       />
 
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
+        <Text style={styles.loginText}>{loading ? '...' : 'LOGIN'}</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity
         onPress={() => router.push('/screens/Auth/ForgotPassword')}
         style={styles.forgotPasswordContainer}
       >
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-      </TouchableOpacity>
-
-      <View style={styles.roleSwitch}>
-        <TouchableOpacity
-          style={[styles.roleButton, role === "user" && styles.activeRole]}
-          onPress={() => setRole("user")}
-        >
-          <Text style={styles.roleText}>User</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.roleButton, role === "admin" && styles.activeRole]}
-          onPress={() => setRole("admin")}
-        >
-          <Text style={styles.roleText}>Admin</Text>
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
-        <Text style={styles.loginText}>{loading ? '...' : 'LOGIN'}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleSignup} style={styles.signupContainer}>
@@ -130,26 +121,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderRadius: 8,
     backgroundColor: "rgba(255,255,255,0.1)",
-  },
-  roleSwitch: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 25,
-  },
-  roleButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#FFFFFF",
-  },
-  activeRole: {
-    backgroundColor: "#D4AF37",
-    borderColor: "#D4AF37",
-  },
-  roleText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
   },
   loginButton: {
     backgroundColor: "#D4AF37",

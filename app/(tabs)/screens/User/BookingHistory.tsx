@@ -1,16 +1,13 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Stack, router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { cancelBooking, useBookings } from "../../../store/bookingsStore";
-import UserModal from "./UserModal"; // Make sure this path is correct for your project
+import UserModal from "./UserModal";
 
 export default function BookingHistory() {
   const [modalVisible, setModalVisible] = useState(false);
-  const bookings = useBookings();
-  // Simulate current user id; replace with real auth user id when available
-  const currentUserId = "u1";
-  const userBookings = useMemo(() => bookings.filter(b => b.userId === currentUserId), [bookings]);
+  const userBookings = useBookings();
 
   const canCancel = (b: any) => {
     const isCompletedAndPaid = b.status === "COMPLETED" && b.paymentStatus === "PAID";

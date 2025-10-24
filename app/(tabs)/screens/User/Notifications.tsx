@@ -12,10 +12,10 @@ export default function Notifications() {
 
   useEffect(() => {
     const run = async () => {
-      const email = session.user?.email;
-      if (!email) return;
-      const { notifications } = await api.getNotifications({ email });
-      setItems(notifications);
+      const userId = session.user?.id;
+      if (!userId) return;
+      const { notifications } = await api.getNotifications(userId);
+      setItems(notifications as Noti[]);
     };
     run();
   }, []);
