@@ -43,6 +43,10 @@ export default function Signup() {
       Alert.alert("You must be at least 18 years old to sign up.");
       return;
     }
+    if (!phone.trim()) {
+      Alert.alert("Please enter your Phone Number.");
+      return;
+    }
     if (!idOrPassport.trim()) {
       Alert.alert("Please enter your ID or Passport Number.");
       return;

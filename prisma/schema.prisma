@@ -23,7 +23,6 @@ model User {
   role        Role      @default(USER)
   dateOfBirth DateTime? @map("date_of_birth")
   idOrPassport String?  @map("id_or_passport")
-  department  String?
   lastLogin   DateTime? @map("last_login")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")

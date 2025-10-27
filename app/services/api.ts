@@ -30,7 +30,7 @@ function resolveApiUrl() {
 
 const API_URL = resolveApiUrl();
 
-export type User = { id: number; email: string; full_name: string; phone?: string | null; role: 'user' | 'admin'; date_of_birth?: string | null; id_or_passport?: string | null; department?: string | null; last_login?: string | null; };
+export type User = { id: number; email: string; full_name: string; phone?: string | null; role: 'user' | 'admin'; date_of_birth?: string | null; id_or_passport?: string | null; last_login?: string | null; };
 export type Hotel = { id: number; name: string; city: string; country: string; description?: string | null; star_rating?: number | null };
 export type Flight = { id: number; flight_number: string; airline: string; departure: string; arrival: string; date: string; time?: string; price: number; image_url?: string; is_first_class?: boolean };
 
@@ -109,20 +109,19 @@ export const api = {
         role: String(u.role).toLowerCase(),
         date_of_birth: u.dateOfBirth || u.date_of_birth || null,
         id_or_passport: u.idOrPassport || u.id_or_passport || null,
-        department: u.department || null,
         created_at: u.createdAt ?? u.created_at,
       }));
     }
     return res;
   },
   
-  createUser: (payload: { email: string; password: string; full_name: string; phone?: string; role?: 'user' | 'admin'; date_of_birth?: string; id_or_passport?: string; department?: string }) =>
+  createUser: (payload: { email: string; password: string; full_name: string; phone?: string; role?: 'user' | 'admin'; date_of_birth?: string; id_or_passport?: string }) =>
     apiCall('/users', { method: 'POST', body: JSON.stringify({
       ...payload,
       role: payload.role ? payload.role.toUpperCase() : undefined,
     }) }),
   
-  updateUser: (id: number, payload: Partial<{ email: string; password: string; full_name: string; phone?: string; role: 'user'|'admin'; date_of_birth?: string; id_or_passport?: string; department?: string }>) =>
+  updateUser: (id: number, payload: Partial<{ email: string; password: string; full_name: string; phone?: string; role: 'user'|'admin'; date_of_birth?: string; id_or_passport?: string }>) =>
     apiCall(`/users/${id}`, { method: 'PUT', body: JSON.stringify({
       ...payload,
       role: payload.role ? payload.role.toUpperCase() : undefined,
@@ -144,14 +143,13 @@ export const api = {
         role: String(user.role).toLowerCase(),
         date_of_birth: user.dateOfBirth || user.date_of_birth,
         id_or_passport: user.idOrPassport || user.id_or_passport,
-        department: user.department,
         last_login: user.lastLogin || user.last_login,
       };
     }
     return res;
   },
 
-  updateOwnProfile: async (userId: number, payload: Partial<{ full_name: string; phone?: string; date_of_birth?: string; id_or_passport?: string; department?: string }>) => {
+  updateOwnProfile: async (userId: number, payload: Partial<{ full_name: string; phone?: string; date_of_birth?: string; id_or_passport?: string }>) => {
     const res = await apiCall('/users/me', { 
       method: 'PUT', 
       body: JSON.stringify(payload) 
@@ -167,7 +165,6 @@ export const api = {
         role: String(user.role).toLowerCase(),
         date_of_birth: user.dateOfBirth || user.date_of_birth,
         id_or_passport: user.idOrPassport || user.id_or_passport,
-        department: user.department,
         last_login: user.lastLogin || user.last_login,
       };
     }

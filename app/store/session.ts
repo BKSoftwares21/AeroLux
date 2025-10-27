@@ -39,7 +39,7 @@ export const session = {
     return null;
   },
   
-  async updateProfile(updates: Partial<{ full_name: string; phone?: string; date_of_birth?: string; id_or_passport?: string; department?: string }>): Promise<boolean> {
+  async updateProfile(updates: Partial<{ full_name: string; phone?: string; date_of_birth?: string; id_or_passport?: string }>): Promise<boolean> {
     if (!_currentUser) return false;
     
     try {

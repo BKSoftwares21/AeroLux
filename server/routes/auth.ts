@@ -28,7 +28,7 @@ router.post('/signup', async (req, res) => {
         fullName: full_name,
         phone,
         role: 'USER',
-        dateOfBirth: date_of_birth || undefined,
+        dateOfBirth: date_of_birth ? new Date(date_of_birth) : undefined,
         idOrPassport: id_or_passport || undefined,
       },
       select: {
@@ -37,8 +37,6 @@ router.post('/signup', async (req, res) => {
         fullName: true,
         phone: true,
         role: true,
-        dateOfBirth: true,
-        idOrPassport: true,
       },
     });
 
@@ -50,7 +48,7 @@ router.post('/signup', async (req, res) => {
     res.status(201).json({ user, token });
   } catch (error) {
     console.error('Signup error:', error);
-    res.status(500).json({ error: 'Failed to create user' });
+    res.status(500).json({ error: 'Failed to create user', detail: (error as any)?.message || String(error) });
   }
 });
 
