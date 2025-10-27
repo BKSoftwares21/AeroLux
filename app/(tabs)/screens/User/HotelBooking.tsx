@@ -27,12 +27,13 @@ export default function HotelBookingScreen({ route }: any) {
 
   const handleBook = () => {
     router.push({
-      pathname: "../screens/User/PaymentScreen",
+      pathname: "/(tabs)/screens/User/Payments",
       params: {
-        bookingType: "Hotel",
+        type: "HOTEL",
         name: hotel.name,
-        details: `${hotel.location} - ${hotel.bedType} Bed`,
+        location: hotel.location || (hotel.city && hotel.country ? `${hotel.city}, ${hotel.country}` : ''),
         price: hotel.pricePerNight,
+        imageUri: hotel.imageUri || hotel.image_url,
       },
     });
   };

@@ -3,6 +3,23 @@ import prisma from '../prisma';
 
 const router = express.Router();
 
+// List all payments (admin)
+router.get('/', async (_req, res) => {
+  try {
+    const payments = await prisma.payment.findMany({
+      include: {
+        user: { select: { id: true, email: true, fullName: true } },
+        booking: { select: { id: true, reference: true, type: true, description: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json({ payments });
+  } catch (error) {
+    console.error('List payments error:', error);
+    res.status(500).json({ error: 'Failed to fetch payments' });
+  }
+});
+
 // Get user payments
 router.get('/user/:userId', async (req, res) => {
   try {

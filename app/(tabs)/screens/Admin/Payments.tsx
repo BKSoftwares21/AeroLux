@@ -7,66 +7,44 @@ import {
   View,
 } from "react-native";
 import AdminLayout from "../../../../components/AdminLayout";
+import { api } from "../../../services/api";
 
-interface Payment {
-  id: number;
-  bookingId: number;
+type AdminPayment = {
+  id: string;
+  bookingId: string;
+  userId: number;
   amount: number;
-  status: string;
-  paymentMethod: string;
-  bookingType: "FLIGHT" | "HOTEL";
-  details: {
-    name: string;
-    location: string;
-    date?: string;
-    duration?: string;
-  };
-}
+  status: string; // 'pending' | 'paid' | 'failed'
+  method?: string;
+  bookingType?: 'FLIGHT' | 'HOTEL';
+  description?: string;
+};
 
 export default function PaymentsPage() {
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<AdminPayment[]>([]);
 
   useEffect(() => {
     fetchPayments();
   }, []);
 
   const fetchPayments = async () => {
-    // Replace this with API call
-    setPayments([
-      {
-        id: 1,
-        bookingId: 101,
-        amount: 250,
-        status: "PENDING",
-        paymentMethod: "CARD",
-        bookingType: "FLIGHT",
-        details: {
-          name: "AeroLux Airways",
-          location: "Paris → New York",
-          date: "2025-10-18",
-        },
-      },
-      {
-        id: 2,
-        bookingId: 202,
-        amount: 500,
-        status: "PAID",
-        paymentMethod: "MOBILE_MONEY",
-        bookingType: "HOTEL",
-        details: {
-          name: "Bahamas Resort",
-          location: "Nassau, Bahamas",
-          duration: "5 Days / 4 Nights",
-        },
-      },
-    ]);
+    const res = await api.listPayments();
+    const mapped = (res.payments || []).map((p: any) => ({
+      id: String(p.id),
+      bookingId: String(p.bookingId),
+      userId: p.userId,
+      amount: Number(p.amount),
+      status: String(p.status),
+      method: p.method || 'CARD',
+      bookingType: p.booking?.type,
+      description: p.booking?.description,
+    }));
+    setPayments(mapped);
   };
 
-  const updatePayment = async (id: number, status: string) => {
-    // Replace with API PUT request later
-    setPayments((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status } : p))
-    );
+  const updatePayment = async (id: string, status: 'paid' | 'failed') => {
+    await api.updatePaymentStatus(id, status);
+    await fetchPayments();
   };
 
   return (
@@ -80,58 +58,46 @@ export default function PaymentsPage() {
           <View style={styles.card}>
             {/* Booking Info */}
             <Text style={styles.cardTitle}>
-              {item.bookingType === "FLIGHT" ? "✈️ Flight" : "🏨 Hotel"} Booking
+              {item.bookingType === "FLIGHT" ? "✈️ Flight" : item.bookingType === "HOTEL" ? "🏨 Hotel" : "💳 Payment"}
             </Text>
             <Text style={styles.text}>
               <Text style={styles.label}>Booking ID:</Text> {item.bookingId}
             </Text>
-            <Text style={styles.text}>
-              <Text style={styles.label}>Name:</Text> {item.details.name}
-            </Text>
-            <Text style={styles.text}>
-              <Text style={styles.label}>Location:</Text> {item.details.location}
-            </Text>
-            {item.details.date && (
+            {item.description ? (
               <Text style={styles.text}>
-                <Text style={styles.label}>Date:</Text> {item.details.date}
+                <Text style={styles.label}>Description:</Text> {item.description}
               </Text>
-            )}
-            {item.details.duration && (
-              <Text style={styles.text}>
-                <Text style={styles.label}>Duration:</Text>{" "}
-                {item.details.duration}
-              </Text>
-            )}
+            ) : null}
             <Text style={styles.text}>
-              <Text style={styles.label}>Amount:</Text> ${item.amount}
+              <Text style={styles.label}>Amount:</Text> ${item.amount.toFixed(2)}
             </Text>
             <Text style={styles.text}>
               <Text style={styles.label}>Payment Method:</Text>{" "}
-              {item.paymentMethod}
+              {item.method}
             </Text>
             <Text
               style={[
                 styles.status,
-                item.status === "PAID"
+                item.status === "paid"
                   ? styles.statusPaid
-                  : item.status === "FAILED"
+                  : item.status === "failed"
                   ? styles.statusFailed
                   : styles.statusPending,
               ]}
             >
-              {item.status}
+              {item.status.toUpperCase()}
             </Text>
 
             {/* Actions */}
             <View style={styles.row}>
               <TouchableOpacity
-                onPress={() => updatePayment(item.id, "PAID")}
+                onPress={() => updatePayment(item.id, "paid")}
                 style={[styles.button, { backgroundColor: "#22C55E" }]}
               >
                 <Text style={styles.actionText}>Mark as Paid</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => updatePayment(item.id, "FAILED")}
+                onPress={() => updatePayment(item.id, "failed")}
                 style={[styles.button, { backgroundColor: "#EF4444" }]}
               >
                 <Text style={styles.actionText}>Mark as Failed</Text>

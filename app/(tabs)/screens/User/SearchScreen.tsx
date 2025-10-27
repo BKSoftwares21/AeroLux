@@ -127,8 +127,8 @@ export default function Search() {
                   location: `${(item as any).city}, ${(item as any).country}`,
                   description: (item as any).description || '',
                   rating: (item as any).star_rating ?? (item as any).starRating ?? undefined,
-                  // image url stored under amenities.imageUrl
-                  imageUri: (item as any).amenities?.imageUrl || undefined,
+                  // image url (column or amenities fallback)
+                  imageUri: (item as any).image_url || (item as any).amenities?.imageUrl || undefined,
                 });
                 router.push({ pathname: '/(tabs)/screens/User/HotelBooking', params: { type: 'hotel', payload } });
               } else {

@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 // Sign up
 router.post('/signup', async (req, res) => {
   try {
-    const { email, password, full_name, phone } = req.body;
+    const { email, password, full_name, phone, date_of_birth, id_or_passport } = req.body;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -28,6 +28,8 @@ router.post('/signup', async (req, res) => {
         fullName: full_name,
         phone,
         role: 'USER',
+        dateOfBirth: date_of_birth || undefined,
+        idOrPassport: id_or_passport || undefined,
       },
       select: {
         id: true,
@@ -35,6 +37,8 @@ router.post('/signup', async (req, res) => {
         fullName: true,
         phone: true,
         role: true,
+        dateOfBirth: true,
+        idOrPassport: true,
       },
     });
 
@@ -79,6 +83,8 @@ router.post('/login', async (req, res) => {
         full_name: user.fullName,
         phone: user.phone,
         role: user.role,
+        date_of_birth: (user as any).dateOfBirth || null,
+        id_or_passport: (user as any).idOrPassport || null,
       },
       token,
     });

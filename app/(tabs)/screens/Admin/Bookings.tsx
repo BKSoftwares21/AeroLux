@@ -1,18 +1,48 @@
 // screens/Admin/BookingsPage.tsx
 import React from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useBookings, updateBookingStatus, cancelBooking, deleteBooking as storeDeleteBooking } from "../../../store/bookingsStore";
+import { api } from "../../../services/api";
 
+
+type AdminBooking = {
+  id: string;
+  userId: number;
+  type: 'FLIGHT' | 'HOTEL';
+  reference: string;
+  date: string;
+  amount: number;
+  description: string;
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+};
 
 export default function Bookings() {
-  const bookings = useBookings();
+  const [bookings, setBookings] = React.useState<AdminBooking[]>([]);
 
-  const updateBooking = (id: string | number, status: "CONFIRMED" | "CANCELLED" | "PENDING" | "COMPLETED") => {
-    updateBookingStatus(id, status);
+  const load = React.useCallback(async () => {
+    const res = await api.listBookings();
+    const mapped = (res.bookings || []).map((b: any) => ({
+      id: String(b.id),
+      userId: b.userId,
+      type: b.type,
+      reference: b.reference,
+      date: new Date(b.date).toISOString().slice(0,10),
+      amount: Number(b.amount),
+      description: b.description,
+      status: b.status,
+    }));
+    setBookings(mapped);
+  }, []);
+
+  React.useEffect(() => { load(); }, [load]);
+
+  const updateBooking = async (id: string | number, status: "CONFIRMED" | "CANCELLED" | "PENDING" | "COMPLETED") => {
+    await api.updateBookingStatus(String(id), status);
+    await load();
   };
 
-  const deleteBooking = (id: string | number) => {
-    storeDeleteBooking(id);
+  const deleteBooking = async (id: string | number) => {
+    await api.deleteBooking(String(id));
+    await load();
   };
 
   return (

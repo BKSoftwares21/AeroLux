@@ -60,7 +60,7 @@ const apiCall = async (endpoint: string, options: RequestInit = {}, userId?: num
 
 export const api = {
   // Auth
-  signup: async (payload: { email: string; password: string; full_name: string; phone?: string }) => {
+  signup: async (payload: { email: string; password: string; full_name: string; phone?: string; date_of_birth?: string; id_or_passport?: string }) => {
     const res = await apiCall('/auth/signup', { method: 'POST', body: JSON.stringify(payload) });
     if (res?.user?.role) res.user.role = String(res.user.role).toLowerCase();
     return res;
@@ -81,10 +81,10 @@ export const api = {
   // Hotels
   listHotels: () => apiCall('/hotels'),
   
-  createHotel: (payload: { name: string; city: string; country: string; description?: string; star_rating: number; amenities?: any }) =>
+  createHotel: (payload: { name: string; city: string; country: string; description?: string; star_rating: number; amenities?: any; image_url?: string }) =>
     apiCall('/hotels', { method: 'POST', body: JSON.stringify(payload) }),
   
-  updateHotel: (id: number, payload: Partial<{ name: string; city: string; country: string; description: string; star_rating: number; amenities: any }>) =>
+  updateHotel: (id: number, payload: Partial<{ name: string; city: string; country: string; description: string; star_rating: number; amenities: any; image_url?: string }>) =>
     apiCall(`/hotels/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   
   deleteHotel: (id: number) => apiCall(`/hotels/${id}`, { method: 'DELETE' }),
@@ -107,19 +107,22 @@ export const api = {
         full_name: u.fullName ?? u.full_name ?? u.fullname,
         phone: u.phone ?? null,
         role: String(u.role).toLowerCase(),
+        date_of_birth: u.dateOfBirth || u.date_of_birth || null,
+        id_or_passport: u.idOrPassport || u.id_or_passport || null,
+        department: u.department || null,
         created_at: u.createdAt ?? u.created_at,
       }));
     }
     return res;
   },
   
-  createUser: (payload: { email: string; password: string; full_name: string; phone?: string; role?: 'user' | 'admin' }) =>
+  createUser: (payload: { email: string; password: string; full_name: string; phone?: string; role?: 'user' | 'admin'; date_of_birth?: string; id_or_passport?: string; department?: string }) =>
     apiCall('/users', { method: 'POST', body: JSON.stringify({
       ...payload,
       role: payload.role ? payload.role.toUpperCase() : undefined,
     }) }),
   
-  updateUser: (id: number, payload: Partial<{ email: string; password: string; full_name: string; phone?: string; role: 'user'|'admin' }>) =>
+  updateUser: (id: number, payload: Partial<{ email: string; password: string; full_name: string; phone?: string; role: 'user'|'admin'; date_of_birth?: string; id_or_passport?: string; department?: string }>) =>
     apiCall(`/users/${id}`, { method: 'PUT', body: JSON.stringify({
       ...payload,
       role: payload.role ? payload.role.toUpperCase() : undefined,
@@ -172,6 +175,7 @@ export const api = {
   },
 
   // Bookings
+  listBookings: () => apiCall('/bookings'),
   getUserBookings: (userId: number) => apiCall(`/bookings/user/${userId}`),
   
   createBooking: (payload: any) =>
@@ -190,10 +194,14 @@ export const api = {
     apiCall('/uploads', { method: 'POST', body: JSON.stringify(payload) }),
 
   // Payments
+  listPayments: () => apiCall('/payments'),
   getUserPayments: (userId: number) => apiCall(`/payments/user/${userId}`),
   
   createPayment: (payload: any) =>
     apiCall('/payments', { method: 'POST', body: JSON.stringify(payload) }),
+  
+  updatePaymentStatus: (id: string, status: 'paid' | 'failed' | 'pending') =>
+    apiCall(`/payments/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 
   // Notifications
   getNotifications: (userId: number) => apiCall(`/notifications/user/${userId}`),

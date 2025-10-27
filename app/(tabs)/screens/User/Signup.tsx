@@ -1,13 +1,14 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router, Stack } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { api } from "../../../services/api";
 import { session } from "../../../store/session";
 
 export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [dob, setDob] = useState<Date | undefined>(undefined);
@@ -26,6 +27,10 @@ export default function Signup() {
   };
 
   const handleSignup = async () => {
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      Alert.alert("Please fill in name, email and password.");
+      return;
+    }
     if (password !== confirmPassword) {
       Alert.alert("Passwords do not match!");
       return;
@@ -44,9 +49,16 @@ export default function Signup() {
     }
     try {
       setLoading(true);
-      const { user } = await api.signup({ email, password, full_name: name });
+      const { user } = await api.signup({ 
+        email: email.trim(), 
+        password, 
+        full_name: name.trim(), 
+        phone: phone.trim() || undefined,
+        date_of_birth: dob ? dob.toISOString().slice(0,10) : undefined,
+        id_or_passport: idOrPassport.trim() || undefined,
+      });
       session.setUser(user);
-      router.push("./Homescreen");
+      router.push("/screens/User/Homescreen");
     } catch (e: any) {
       Alert.alert(e.message || "Signup failed");
     } finally {
@@ -55,7 +67,7 @@ export default function Signup() {
   };
 
   const handleLoginRedirect = () => {
-    router.push("../Auth/Login");
+    router.push("/screens/Auth/Login");
   };
 
   return (
@@ -80,28 +92,43 @@ export default function Signup() {
         value={name}
         onChangeText={setName}
       />
- <TouchableOpacity
-        style={styles.input}
-        onPress={() => setShowPicker(true)}
-        activeOpacity={0.8}
-      >
-        <Text style={{ color: dob ? "#fff" : "#ccc" }}>
-          {dob
-            ? dob.toLocaleDateString()
-            : "Date of Birth (Tap to select)"}
-        </Text>
-      </TouchableOpacity>
-      {showPicker && (
-        <DateTimePicker
-          value={dob || new Date(2000, 0, 1)}
-          mode="date"
-          display="default"
-          maximumDate={new Date()}
-          onChange={(event, selectedDate) => {
-            setShowPicker(false);
-            if (selectedDate) setDob(selectedDate);
+      {Platform.OS === "web" ? (
+        <TextInput
+          style={styles.input}
+          placeholder="Date of Birth (YYYY-MM-DD)"
+          placeholderTextColor="#ccc"
+          value={dob ? dob.toISOString().slice(0, 10) : ""}
+          onChangeText={(text) => {
+            const parsed = new Date(text);
+            if (!isNaN(parsed.getTime())) setDob(parsed);
           }}
         />
+      ) : (
+        <>
+          <TouchableOpacity
+            style={styles.input}
+            onPress={() => setShowPicker(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: dob ? "#fff" : "#ccc" }}>
+              {dob
+                ? dob.toLocaleDateString()
+                : "Date of Birth (Tap to select)"}
+            </Text>
+          </TouchableOpacity>
+          {showPicker && (
+            <DateTimePicker
+              value={dob || new Date(2000, 0, 1)}
+              mode="date"
+              display="default"
+              maximumDate={new Date()}
+              onChange={(event, selectedDate) => {
+                setShowPicker(false);
+                if (selectedDate) setDob(selectedDate);
+              }}
+            />
+          )}
+        </>
       )}
       <TextInput
         style={styles.input}
@@ -109,6 +136,13 @@ export default function Signup() {
         placeholderTextColor="#ccc"
         value={email}
         onChangeText={setEmail}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Phone Number"
+        placeholderTextColor="#ccc"
+        value={phone}
+        onChangeText={setPhone}
       />
        <TextInput
         style={styles.input}

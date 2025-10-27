@@ -3,16 +3,18 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { getBookingById, markBookingPaid } from "../../../store/bookingsStore";
-
+import { session } from "../../../store/session";
+import { api } from "../../../services/api";
 
 export default function Payments() {
   // Get booking details from previous screen or via bookingId
-  const { bookingId, type, name, location, price } = useLocalSearchParams<{
+  const { bookingId, type, name, location, price, imageUri } = useLocalSearchParams<{
     bookingId?: string;
     type?: string;
     name?: string;
     location?: string;
     price?: string;
+    imageUri?: string;
   }>();
 
   const booking = bookingId ? getBookingById(bookingId) : undefined;
@@ -22,14 +24,40 @@ export default function Payments() {
   const [cvv, setCvv] = useState("");
   const [cardName, setCardName] = useState("");
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
+    const userId = session.user?.id;
     if (booking) {
-      markBookingPaid(booking.id);
+      await markBookingPaid(booking.id);
+      try {
+        if (userId) {
+          await api.createPayment({ bookingId: booking.id, userId, amount: booking.amount, method: 'CARD' });
+        }
+      } catch {}
       alert(`✅ Payment Successful! Your ${booking.type.toLowerCase()} booking is confirmed.`);
-      router.push("../screens/User/BookingHistory");
+      router.push({ pathname: '/(tabs)/screens/User/BookingConfirmationScreen', params: { type: booking.type, name, location, price: booking.amount, imageUri, reference: booking.reference, date: booking.date } });
     } else {
-      alert(`✅ Payment Successful! Your ${type || "hotel"} booking is confirmed.`);
-      router.push("../screens/User/BookingHistory");
+      // Create a booking first then mark paid
+      try {
+        if (!userId) throw new Error('No user');
+        const ref = `${(type || 'HOTEL').toString().toUpperCase().slice(0,3)}-${Math.random().toString(36).slice(2,8).toUpperCase()}`;
+        const created = await api.createBooking({
+          userId,
+          type: (type || 'HOTEL').toUpperCase(),
+          reference: ref,
+          date: new Date().toISOString(),
+          amount: Number(price || 0),
+          description: `${name || ''} ${location ? '- ' + location : ''}`.trim(),
+          metadata: { imageUri },
+        });
+        const bid = String(created.booking?.id || created.id);
+        await api.markBookingPaid(bid);
+        await api.createPayment({ bookingId: bid, userId, amount: Number(price || 0), method: 'CARD' });
+        alert('✅ Payment Successful!');
+        router.push({ pathname: '/(tabs)/screens/User/BookingConfirmationScreen', params: { type, name, location, price, imageUri, reference: ref, date: new Date().toISOString().slice(0,10) } });
+      } catch (e) {
+        alert('Payment completed, but failed to create booking.');
+        router.push('/(tabs)/screens/User/BookingHistory');
+      }
     }
   };
 

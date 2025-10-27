@@ -3,6 +3,23 @@ import prisma from '../prisma';
 
 const router = express.Router();
 
+// List all bookings (admin)
+router.get('/', async (_req, res) => {
+  try {
+    const bookings = await prisma.booking.findMany({
+      include: {
+        user: { select: { id: true, email: true, fullName: true } },
+        hotel: { select: { id: true, name: true, city: true, country: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json({ bookings });
+  } catch (error) {
+    console.error('List bookings error:', error);
+    res.status(500).json({ error: 'Failed to fetch bookings' });
+  }
+});
+
 // Get user bookings
 router.get('/user/:userId', async (req, res) => {
   try {

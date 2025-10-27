@@ -14,6 +14,9 @@ router.get('/', async (req, res) => {
         fullName: true,
         phone: true,
         role: true,
+        dateOfBirth: true,
+        idOrPassport: true,
+        department: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -30,7 +33,7 @@ router.get('/', async (req, res) => {
 // Create user (admin only)
 router.post('/', async (req, res) => {
   try {
-    const { email, password, full_name, phone, role } = req.body;
+    const { email, password, full_name, phone, role, date_of_birth, id_or_passport, department } = req.body;
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const normalizedRole = String(role || 'USER').toUpperCase() === 'ADMIN' ? 'ADMIN' : 'USER';
@@ -42,6 +45,9 @@ router.post('/', async (req, res) => {
         fullName: full_name,
         phone,
         role: normalizedRole as any,
+        dateOfBirth: date_of_birth || undefined,
+        idOrPassport: id_or_passport || undefined,
+        department: department || undefined,
       },
       select: {
         id: true,
@@ -49,6 +55,9 @@ router.post('/', async (req, res) => {
         fullName: true,
         phone: true,
         role: true,
+        dateOfBirth: true,
+        idOrPassport: true,
+        department: true,
       },
     });
 
@@ -63,13 +72,16 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, password, full_name, phone, role } = req.body;
+    const { email, password, full_name, phone, role, date_of_birth, id_or_passport, department } = req.body;
 
     const data: any = {};
     if (email) data.email = email;
     if (full_name) data.fullName = full_name;
     if (phone !== undefined) data.phone = phone;
     if (role !== undefined) data.role = (String(role).toUpperCase() === 'ADMIN' ? 'ADMIN' : 'USER') as any;
+    if (date_of_birth !== undefined) data.dateOfBirth = date_of_birth;
+    if (id_or_passport !== undefined) data.idOrPassport = id_or_passport;
+    if (department !== undefined) data.department = department;
     if (password) data.password = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.update({
@@ -81,6 +93,9 @@ router.put('/:id', async (req, res) => {
         fullName: true,
         phone: true,
         role: true,
+        dateOfBirth: true,
+        idOrPassport: true,
+        department: true,
       },
     });
 

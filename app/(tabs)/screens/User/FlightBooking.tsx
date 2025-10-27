@@ -21,12 +21,13 @@ export default function FlightBooking({ route }: any) {
 
   const handleBook = () => {
     router.push({
-      pathname: "../screens/User/PaymentScreen",
+      pathname: "/(tabs)/screens/User/Payments",
       params: {
-        bookingType: "Flight",
+        type: "FLIGHT",
         name: flight.airline,
-        details: `${flight.departure} → ${flight.arrival}`,
+        location: `${flight.departure} → ${flight.arrival}`,
         price: flight.price,
+        imageUri: flight.imageUri,
       },
     });
   };

@@ -52,6 +52,7 @@ export default function AdminHotelsScreen() {
         description,
         star_rating: Number(star),
         amenities,
+        image_url: imageUrl,
       });
     } else {
       await api.createHotel({
@@ -61,6 +62,7 @@ export default function AdminHotelsScreen() {
         description,
         star_rating: Number(star),
         amenities,
+        image_url: imageUrl,
       });
     }
     resetForm();
@@ -75,7 +77,8 @@ export default function AdminHotelsScreen() {
     setDescription((h as any).description || "");
     setStar(String((h as any).star_rating || (h as any).starRating || ""));
     const am = (h as any).amenities;
-    if (am && typeof am === 'object') {
+    if ((h as any).image_url) setImageUrl((h as any).image_url);
+    else if (am && typeof am === 'object') {
       if (Array.isArray(am.list)) setAmenitiesText(am.list.join(", "));
       if (am.imageUrl) setImageUrl(am.imageUrl);
     } else if (Array.isArray(am)) {
@@ -133,8 +136,8 @@ export default function AdminHotelsScreen() {
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
             <View style={styles.card}>
-              {((item as any).amenities && (item as any).amenities.imageUrl) ? (
-                <Image source={{ uri: (item as any).amenities.imageUrl }} style={styles.hotelImage} />
+              {((item as any).image_url || (item as any).amenities?.imageUrl) ? (
+                <Image source={{ uri: (item as any).image_url || (item as any).amenities?.imageUrl }} style={styles.hotelImage} />
               ) : null}
               <Text style={styles.cardTitle}>{item.name}</Text>
               <Text style={styles.cardSub}>{(item as any).city}, {(item as any).country}</Text>

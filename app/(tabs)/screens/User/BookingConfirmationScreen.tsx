@@ -1,15 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export default function BookingConfirmationScreen() {
+export default function BookingConfirmationScreen({ route }: any) {
+  const { type, name, location, price, imageUri, reference, date } = route?.params || {};
 
   return (
     <View style={styles.container}>
       {/* Success Icon */}
       <Ionicons name="checkmark-circle" size={100} color="#FFD700" />
-
+<Stack.Screen options={{ headerShown: false }} />
       {/* Title */}
       <Text style={styles.title}>Booking Confirmed!</Text>
       <Text style={styles.subtitle}>
@@ -17,16 +18,18 @@ export default function BookingConfirmationScreen() {
         completed.
       </Text>
 
-      {/* Example Trip Card */}
+      {/* Booking Details */}
       <View style={styles.card}>
         <Image
-          source={require("../../../../assets/images/destination.jpg")}
+          source={imageUri ? (typeof imageUri === 'string' ? { uri: imageUri } : imageUri) : require("../../../../assets/images/destination.jpg")}
           style={styles.cardImage}
         />
         <View style={styles.cardContent}>
-          <Text style={styles.cardTitle}>Paris, France</Text>
-          <Text style={styles.cardDetails}>5 Days, 4 Nights</Text>
-          <Text style={styles.cardPrice}>$899</Text>
+          <Text style={styles.cardTitle}>{name || (type === 'FLIGHT' ? 'Flight' : 'Hotel')}</Text>
+          <Text style={styles.cardDetails}>{location || ''}</Text>
+          <Text style={styles.cardPrice}>{price ? `$${price}` : ''}</Text>
+          {reference ? <Text style={styles.cardDetails}>Ref: {reference}</Text> : null}
+          {date ? <Text style={styles.cardDetails}>Date: {date}</Text> : null}
         </View>
       </View>
 

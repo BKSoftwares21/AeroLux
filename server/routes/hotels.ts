@@ -3,6 +3,18 @@ import prisma from '../prisma';
 
 const router = express.Router();
 
+function toHotelData(body: any) {
+  return {
+    name: body.name,
+    city: body.city,
+    country: body.country,
+    description: body.description,
+    starRating: body.star_rating ?? body.starRating,
+    amenities: body.amenities,
+    imageUrl: body.image_url ?? body.imageUrl,
+  } as any;
+}
+
 // Get all hotels
 router.get('/', async (req, res) => {
   try {
@@ -15,6 +27,7 @@ router.get('/', async (req, res) => {
         description: true,
         starRating: true,
         amenities: true,
+        imageUrl: true,
       },
     });
 
@@ -45,6 +58,7 @@ router.get('/search', async (req, res) => {
         description: true,
         starRating: true,
         amenities: true,
+        imageUrl: true,
       },
     });
 
@@ -58,16 +72,17 @@ router.get('/search', async (req, res) => {
 // Create hotel (admin only)
 router.post('/', async (req, res) => {
   try {
-    const { name, city, country, description, star_rating, amenities } = req.body;
+    const dataIn = toHotelData(req.body);
 
     const hotel = await prisma.hotel.create({
       data: {
-        name,
-        city,
-        country,
-        description,
-        starRating: star_rating,
-        amenities: amenities || {},
+        name: dataIn.name,
+        city: dataIn.city,
+        country: dataIn.country,
+        description: dataIn.description,
+        starRating: dataIn.starRating,
+        amenities: dataIn.amenities || {},
+        imageUrl: dataIn.imageUrl,
       },
       select: {
         id: true,
@@ -76,6 +91,8 @@ router.post('/', async (req, res) => {
         country: true,
         description: true,
         starRating: true,
+        amenities: true,
+        imageUrl: true,
       },
     });
 
@@ -90,17 +107,18 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, city, country, description, star_rating, amenities } = req.body;
+    const dataIn = toHotelData(req.body);
 
     const hotel = await prisma.hotel.update({
       where: { id: parseInt(id) },
       data: {
-        ...(name && { name }),
-        ...(city && { city }),
-        ...(country && { country }),
-        ...(description !== undefined && { description }),
-        ...(star_rating !== undefined && { starRating: star_rating }),
-        ...(amenities && { amenities }),
+        ...(dataIn.name && { name: dataIn.name }),
+        ...(dataIn.city && { city: dataIn.city }),
+        ...(dataIn.country && { country: dataIn.country }),
+        ...(dataIn.description !== undefined && { description: dataIn.description }),
+        ...(dataIn.starRating !== undefined && { starRating: dataIn.starRating }),
+        ...(dataIn.amenities && { amenities: dataIn.amenities }),
+        ...(dataIn.imageUrl !== undefined && { imageUrl: dataIn.imageUrl }),
       },
       select: {
         id: true,
@@ -109,6 +127,8 @@ router.put('/:id', async (req, res) => {
         country: true,
         description: true,
         starRating: true,
+        amenities: true,
+        imageUrl: true,
       },
     });
 

@@ -8,8 +8,11 @@ type User = {
   id: number;
   full_name: string;
   email: string;
-  phone?: string;
+  phone?: string | null;
   role: "user" | "admin";
+  date_of_birth?: string | null;
+  id_or_passport?: string | null;
+  department?: string | null;
   created_at: string;
 };
 
@@ -23,6 +26,9 @@ export default function Users() {
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState<"user" | "admin">("user");
   const [password, setPassword] = useState("");
+  const [dob, setDob] = useState<string>("");
+  const [idOrPassport, setIdOrPassport] = useState<string>("");
+  const [department, setDepartment] = useState<string>("");
 
   const load = async () => {
     const { users } = await api.listUsers();
@@ -36,10 +42,10 @@ export default function Users() {
       return;
     }
     if (editingUser) {
-      await api.updateUser(editingUser.id, { full_name: fullName, email, phone, role });
+      await api.updateUser(editingUser.id, { full_name: fullName, email, phone, role, date_of_birth: dob || undefined, id_or_passport: idOrPassport || undefined, department: department || undefined });
     } else {
       if (!password) { alert("Password is required for new users."); return; }
-      await api.createUser({ full_name: fullName, email, phone, role, password });
+      await api.createUser({ full_name: fullName, email, phone, role, password, date_of_birth: dob || undefined, id_or_passport: idOrPassport || undefined, department: department || undefined });
     }
     setModalVisible(false);
     setEditingUser(null);
@@ -58,6 +64,9 @@ export default function Users() {
     setPhone(user.phone || "");
     setRole(user.role);
     setPassword("");
+    setDob(user.date_of_birth || "");
+    setIdOrPassport(user.id_or_passport || "");
+    setDepartment(user.department || "");
     setModalVisible(true);
   };
 
@@ -77,6 +86,9 @@ export default function Users() {
               <Text style={styles.userText}>{item.full_name} ({item.role})</Text>
               <Text style={styles.emailText}>{item.email}</Text>
               {item.phone ? <Text style={styles.detailText}>Phone: {item.phone}</Text> : null}
+              {item.id_or_passport ? <Text style={styles.detailText}>ID/Passport: {item.id_or_passport}</Text> : null}
+              {item.date_of_birth ? <Text style={styles.detailText}>DOB: {item.date_of_birth}</Text> : null}
+              {item.department ? <Text style={styles.detailText}>Department: {item.department}</Text> : null}
               <View style={styles.actions}>
                 <TouchableOpacity onPress={() => handleEdit(item)} style={styles.editButton}>
                   <Text style={styles.actionText}>Edit</Text>
@@ -115,6 +127,9 @@ export default function Users() {
               <TextInput style={styles.input} placeholder="Full Name" placeholderTextColor="#aaa" value={fullName} onChangeText={setFullName} />
               <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#aaa" value={email} onChangeText={setEmail} />
               <TextInput style={styles.input} placeholder="Phone Number" placeholderTextColor="#aaa" value={phone} onChangeText={setPhone} />
+              <TextInput style={styles.input} placeholder="ID or Passport" placeholderTextColor="#aaa" value={idOrPassport} onChangeText={setIdOrPassport} />
+              <TextInput style={styles.input} placeholder="Date of Birth (YYYY-MM-DD)" placeholderTextColor="#aaa" value={dob} onChangeText={setDob} />
+              <TextInput style={styles.input} placeholder="Department" placeholderTextColor="#aaa" value={department} onChangeText={setDepartment} />
               {!editingUser && (
                 <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#aaa" value={password} onChangeText={setPassword} secureTextEntry />
               )}
