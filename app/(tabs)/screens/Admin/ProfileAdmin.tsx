@@ -8,7 +8,6 @@ import { session } from "../../../store/session";
 export default function ProfileAdmin() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [department, setDepartment] = useState("");
   const [role, setRole] = useState("");
   const [lastLogin, setLastLogin] = useState("");
   const [loading, setLoading] = useState(true);
@@ -33,15 +32,14 @@ export default function ProfileAdmin() {
         
         setName(user.full_name || "");
         setEmail(user.email || "");
-        setDepartment(user.department || "");
         setRole(user.role === 'admin' ? 'Administrator' : 'User');
         setLastLogin(user.last_login ? new Date(user.last_login).toLocaleString() : 'Never');
       } else {
         Alert.alert("Error", "Please log in to view your profile", [
-          { text: "OK", onPress: () => router.replace("/auth/login") }
+          { text: "OK", onPress: () => router.replace("/(tabs)/screens/Auth/Login") }
         ]);
       }
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to load profile. Please try again.");
     } finally {
       setLoading(false);
@@ -64,7 +62,6 @@ export default function ProfileAdmin() {
       
       const updates = {
         full_name: name.trim(),
-        department: department.trim() || null,
       };
 
       await session.updateProfile(updates);
@@ -88,7 +85,7 @@ export default function ProfileAdmin() {
           style: "destructive",
           onPress: () => {
             session.logout();
-            router.replace("/auth/login");
+            router.replace("/(tabs)/screens/Auth/Login");
           }
         }
       ]
@@ -137,14 +134,6 @@ export default function ProfileAdmin() {
         placeholderTextColor="#ccc"
         value={email}
         editable={false}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Department"
-        placeholderTextColor="#ccc"
-        value={department}
-        onChangeText={setDepartment}
-        editable={!saving}
       />
 
       {/* Read-Only Fields */}

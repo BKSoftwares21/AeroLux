@@ -22,9 +22,9 @@ export default function Login() {
       
       // Navigate based on user's actual role from the server
       if (user.role === "admin") {
-        router.push("/screens/Admin/AdminDashboardScreen");
+        router.push("/(tabs)/screens/Admin/AdminDashboardScreen");
       } else {
-        router.push("/screens/User/Homescreen");
+        router.push("/(tabs)/screens/User/Homescreen");
       }
     } catch (e: any) {
       Alert.alert("Login Failed", e.message || "Invalid email or password");
@@ -34,7 +34,7 @@ export default function Login() {
   };
 
   const handleSignup = () => {
-    router.push("/screens/User/Signup");
+    router.push("/(tabs)/screens/User/Signup");
   };
 
   return (
@@ -76,7 +76,7 @@ export default function Login() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => router.push('/screens/Auth/ForgotPassword')}
+        onPress={() => router.push('/(tabs)/screens/Auth/ForgotPassword')}
         style={styles.forgotPasswordContainer}
       >
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>

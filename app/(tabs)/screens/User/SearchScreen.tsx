@@ -39,6 +39,8 @@ export default function Search() {
           price: Number(f.price),
           image_url: f.imageUrl || f.image_url,
           is_first_class: f.isFirstClass ?? f.is_first_class,
+          capacity: Number(f.capacity ?? 0),
+          seats_available: Number(f.seatsAvailable ?? f.seats_available ?? 0),
         }));
         items.push(...mapped as any);
       }
@@ -133,6 +135,7 @@ export default function Search() {
                 router.push({ pathname: '/(tabs)/screens/User/HotelBooking', params: { type: 'hotel', payload } });
               } else {
                 const payload = JSON.stringify({
+                  id: (item as any).id,
                   flightNumber: (item as any).flight_number,
                   airline: (item as any).airline,
                   departure: (item as any).departure,
@@ -142,6 +145,7 @@ export default function Search() {
                   price: (item as any).price,
                   imageUri: (item as any).image_url || undefined,
                   isFirstClass: (item as any).is_first_class ?? false,
+                  seatsAvailable: (item as any).seats_available ?? 0,
                 });
                 router.push({ pathname: '/(tabs)/screens/User/FlightBooking', params: { type: 'flight', payload } });
               }
@@ -159,7 +163,7 @@ export default function Search() {
                     <>
                       <Text style={styles.cardTitle}>{(item as any).airline} • {(item as any).flight_number}</Text>
                       <Text style={styles.cardSubtitle}>{(item as any).departure} → {(item as any).arrival}</Text>
-                      <Text style={styles.cardSubtitle}>{(item as any).date}{(item as any).time ? ` at ${(item as any).time}` : ''} • ${(item as any).price}</Text>
+                      <Text style={styles.cardSubtitle}>{(item as any).date}{(item as any).time ? ` at ${(item as any).time}` : ''} • ${(item as any).price} • Seats left: {(item as any).seats_available ?? 0}</Text>
                     </>
                   )}
                 </View>

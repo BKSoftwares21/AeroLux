@@ -14,28 +14,30 @@ type UserModalProps = {
 export default function UserModal({ visible, onClose, children }: UserModalProps) {
   const slideAnim = useRef(new Animated.Value(height)).current;
   const router = useRouter();
-
+                                                                                        
   useEffect(() => {
     if (visible) {
-      Animated.timing(slideAnim, {
+      Animated.timing(slideAnim, {                          
         toValue: 0,
         duration: 350,
-        useNativeDriver: true,
+        useNativeDriver: true,                               
       }).start();
     } else {
-      Animated.timing(slideAnim, {
+      Animated.timing(slideAnim, {    
         toValue: height,
         duration: 350,
-        useNativeDriver: true,
+        useNativeDriver: true,                
       }).start();
     }
-  }, [visible, slideAnim]);
+  }, [visible, slideAnim]);                               
 
   const handleClose = () => {
-    Animated.timing(slideAnim, {
+    Animated.timing(slideAnim, {     
       toValue: height,
       duration: 350,
       useNativeDriver: true,
+
+      
     }).start(() => {
       onClose && onClose();
     });

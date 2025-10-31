@@ -60,10 +60,10 @@ When you fill out forms in the React Native app, the data now flows like this:
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/signup` - Create new user account
+- `POST /api/auth/signup` - Create new user account (sends confirmation email)
 - `POST /api/auth/login` - Login with email/password
-- `POST /api/auth/forgot-password` - Request password reset
-- `POST /api/auth/reset-password` - Reset password
+- `POST /api/auth/forgot-password` - Request password reset (emails a 6-digit code, 15 min expiry)
+- `POST /api/auth/reset-password` - Reset password with code (sends confirmation email)
 
 ### Hotels
 - `GET /api/hotels` - Get all hotels
@@ -91,9 +91,10 @@ When you fill out forms in the React Native app, the data now flows like this:
 - `PATCH /api/payments/:id` - Update payment status
 
 ### Notifications
-- `GET /api/notifications/user/:userId` - Get user's notifications
-- `POST /api/notifications` - Create notification
-- `PATCH /api/notifications/:id/read` - Mark as read
+Notifications storage has been removed. Endpoints remain but return no-op responses for app compatibility.
+- `GET /api/notifications/user/:userId` → returns an empty list
+- `POST /api/notifications` → returns a no-op message
+- `PATCH /api/notifications/:id/read` → returns a no-op message
 
 ## Testing the Connection
 
@@ -131,6 +132,13 @@ npx prisma studio
 ```
 
 This opens a GUI at `http://localhost:5555` where you can see all your data!
+
+
+## Email configuration
+
+Set these environment variables to enable real email sending (otherwise emails log to console in dev):
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
+- `FROM_EMAIL` (e.g. no-reply@aerolux.com), `FROM_NAME` (e.g. AeroLux)
 
 ## Troubleshooting
 

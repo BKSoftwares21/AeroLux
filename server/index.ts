@@ -11,6 +11,7 @@ import paymentRoutes from './routes/payments';
 import notificationRoutes from './routes/notifications';
 import flightRoutes from './routes/flights';
 import uploadRoutes from './routes/uploads';
+import prisma from './prisma';
 
 dotenv.config();
 
@@ -40,6 +41,48 @@ app.use('/api/uploads', uploadRoutes);
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'AeroLux API Server is running' });
 });
+
+// Background job: process due cancellations and refunds every minute
+async function processDueCancellations() {
+  const now = new Date();
+  const due = await prisma.booking.findMany({
+    where: {
+      cancellationEffectiveAt: { lte: now },
+      status: { not: 'CANCELLED' },
+    },
+    include: { payment: true },
+  });
+
+  for (const b of due) {
+    try {
+      await prisma.$transaction(async (tx: import('@prisma/client').Prisma.TransactionClient) => {
+        // Update booking status to CANCELLED
+        const updateData: any = { status: 'CANCELLED' };
+        // If paid, mark refund
+        if (b.paymentStatus === 'PAID') {
+          updateData.refundStatus = 'REFUNDED';
+          updateData.refundedAt = new Date();
+        }
+        await tx.booking.update({ where: { id: b.id }, data: updateData });
+
+        // If this was a flight booking, release seats
+        if (b.type === 'FLIGHT' && (b as any).flightId && (b as any).passengers) {
+          await tx.flight.update({ where: { id: (b as any).flightId }, data: { seatsAvailable: { increment: (b as any).passengers } } });
+        }
+
+        if (b.paymentStatus === 'PAID' && b.payment) {
+          await tx.payment.update({ where: { id: b.payment.id }, data: { status: 'refunded' } });
+        }
+      });
+    } catch (e) {
+      console.error('Failed processing cancellation for booking', b.id, e);
+    }
+  }
+}
+
+setInterval(() => {
+  processDueCancellations().catch((e) => console.error('processDueCancellations error', e));
+}, 60 * 1000);
 
 app.listen(PORT, () => {
   console.log(`🚀 AeroLux API Server running on http://localhost:${PORT}`);

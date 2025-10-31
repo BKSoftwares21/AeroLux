@@ -8,6 +8,7 @@ export default function FlightBooking({ route }: any) {
     try { parsed = JSON.parse(params.payload); } catch {}
   }
   const flight = parsed || route?.params?.flight || {
+    id: 0,
     flightNumber: "ALX452",
     airline: "AeroLux Airlines",
     departure: "Johannesburg",
@@ -15,9 +16,12 @@ export default function FlightBooking({ route }: any) {
     date: "2025-10-25",
     time: "14:30",
     price: 899,
+    seatsAvailable: 0,
     imageUri: require("../../../../assets/images/OIP.jpg"),
     isFirstClass: true,
   };
+
+  const [passengers, setPassengers] = React.useState(1);
 
   const handleBook = () => {
     router.push({
@@ -26,8 +30,10 @@ export default function FlightBooking({ route }: any) {
         type: "FLIGHT",
         name: flight.airline,
         location: `${flight.departure} → ${flight.arrival}`,
-        price: flight.price,
+        price: (Number(flight.price) * passengers).toString(),
         imageUri: flight.imageUri,
+        flightId: String(flight.id || 0),
+        passengers: String(passengers),
       },
     });
   };
@@ -80,12 +86,26 @@ export default function FlightBooking({ route }: any) {
         </View>
 
         <View style={styles.detailsContainer}>
-          <Text style={styles.detailLabel}>Price:</Text>
+          <Text style={styles.detailLabel}>Seats left:</Text>
+          <Text style={styles.detailValue}>{flight.seatsAvailable ?? flight.seats_available ?? 0}</Text>
+        </View>
+
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailLabel}>Price (each):</Text>
           <Text style={styles.price}>${flight.price}</Text>
         </View>
 
-        <TouchableOpacity style={styles.bookButton} onPress={handleBook}>
-          <Text style={styles.bookText}>Book Flight</Text>
+        <View style={[styles.detailsContainer, { alignItems: 'center' }] }>
+          <Text style={styles.detailLabel}>Passengers:</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <TouchableOpacity onPress={() => setPassengers(Math.max(1, passengers - 1))} style={styles.qtyBtn}><Text style={styles.qtyText}>-</Text></TouchableOpacity>
+            <Text style={styles.detailValue}>{passengers}</Text>
+            <TouchableOpacity onPress={() => setPassengers(Math.min(Number(flight.seatsAvailable ?? flight.seats_available ?? 1), passengers + 1))} style={styles.qtyBtn}><Text style={styles.qtyText}>+</Text></TouchableOpacity>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.bookButton} onPress={handleBook} disabled={passengers < 1 || passengers > (Number(flight.seatsAvailable ?? flight.seats_available ?? 0))}>
+          <Text style={styles.bookText}>Book {passengers} {passengers>1?'Seats':'Seat'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -167,8 +187,19 @@ const styles = StyleSheet.create({
   },
   bookText: {
     color: "#0A1A2F",
+    fontSize: 18,
     fontWeight: "bold",
-    fontSize: 16,
+  },
+  qtyBtn: {
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  qtyText: {
+    color: '#0A1A2F',
+    fontWeight: 'bold',
   },
   backButton: {
     marginTop: 15,

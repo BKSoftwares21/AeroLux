@@ -5,9 +5,9 @@ const prisma = new PrismaClient();
 
 async function main() {
   // Clear existing data
-  await prisma.notification.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.booking.deleteMany();
+  await prisma.flight.deleteMany();
   await prisma.hotel.deleteMany();
   await prisma.user.deleteMany();
 
@@ -98,6 +98,8 @@ async function main() {
         time: '14:30',
         price: 899,
         isFirstClass: true,
+        capacity: 120,
+        seatsAvailable: 120,
       },
     }),
     prisma.flight.create({
@@ -110,11 +112,16 @@ async function main() {
         time: '08:00',
         price: 1299,
         isFirstClass: false,
+        capacity: 200,
+        seatsAvailable: 200,
       },
     }),
   ]);
 
   // Create bookings
+  const firstFlight = await prisma.flight.findFirst({ where: { flightNumber: 'ALX452' } });
+  const secondFlight = await prisma.flight.findFirst({ where: { flightNumber: 'ALX901' } });
+
   const bookings = await Promise.all([
     prisma.booking.create({
       data: {
@@ -126,6 +133,8 @@ async function main() {
         description: 'Flight to Paris',
         status: 'COMPLETED',
         paymentStatus: 'PAID',
+        flightId: firstFlight?.id,
+        passengers: 2,
         metadata: {
           departure: 'JFK',
           arrival: 'CDG',
@@ -161,6 +170,8 @@ async function main() {
         description: 'Flight to Tokyo',
         status: 'PENDING',
         paymentStatus: 'UNPAID',
+        flightId: secondFlight?.id,
+        passengers: 1,
         metadata: {
           departure: 'LAX',
           arrival: 'NRT',
@@ -170,33 +181,7 @@ async function main() {
     }),
   ]);
 
-  // Create notifications
-  await Promise.all([
-    prisma.notification.create({
-      data: {
-        userId: regularUser.id,
-        title: 'Booking Confirmed',
-        body: 'Your hotel booking in Paris has been confirmed!',
-        isRead: false,
-      },
-    }),
-    prisma.notification.create({
-      data: {
-        userId: regularUser.id,
-        title: 'Payment Reminder',
-        body: 'Don\'t forget to complete payment for your Tokyo flight.',
-        isRead: false,
-      },
-    }),
-    prisma.notification.create({
-      data: {
-        userId: adminUser.id,
-        title: 'System Update',
-        body: 'The booking system has been updated successfully.',
-        isRead: true,
-      },
-    }),
-  ]);
+  // Notifications feature removed; no notifications will be seeded.
 
   console.log('✅ Database seeded successfully!');
   console.log(`👤 Admin user: admin@aerolux.com / password123`);

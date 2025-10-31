@@ -26,6 +26,7 @@ export default function AdminFlightsScreen() {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [price, setPrice] = useState("");
+  const [capacity, setCapacity] = useState("");
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [isFirstClass, setIsFirstClass] = useState(false);
 
@@ -39,6 +40,7 @@ export default function AdminFlightsScreen() {
     setPrice("");
     setImageUrl(undefined);
     setIsFirstClass(false);
+    setCapacity("");
     setEditingFlight(null);
   };
 
@@ -76,6 +78,7 @@ export default function AdminFlightsScreen() {
         date,
         time,
         price: +price,
+        capacity: capacity ? +capacity : undefined,
         image_url: imageUrl,
         is_first_class: isFirstClass,
       });
@@ -88,6 +91,7 @@ export default function AdminFlightsScreen() {
         date,
         time,
         price: +price,
+        capacity: capacity ? +capacity : 0,
         image_url: imageUrl,
         is_first_class: isFirstClass,
       });
@@ -127,6 +131,8 @@ export default function AdminFlightsScreen() {
       date: new Date(f.date).toISOString().slice(0,10),
       time: f.time || '',
       price: Number(f.price),
+      capacity: Number(f.capacity ?? 0),
+      seats_available: Number(f.seatsAvailable ?? f.seats_available ?? 0),
       image_url: f.imageUrl || f.image_url,
       is_first_class: f.isFirstClass ?? f.is_first_class,
     }));
@@ -154,6 +160,7 @@ export default function AdminFlightsScreen() {
       <TextInput style={styles.input} placeholder="Date (YYYY-MM-DD)" value={date} onChangeText={setDate} placeholderTextColor="#ccc" />
       <TextInput style={styles.input} placeholder="Time (HH:MM)" value={time} onChangeText={setTime} placeholderTextColor="#ccc" />
       <TextInput style={styles.input} placeholder="Price" value={price} onChangeText={setPrice} keyboardType="numeric" placeholderTextColor="#ccc" />
+      <TextInput style={styles.input} placeholder="Capacity (seats)" value={capacity} onChangeText={setCapacity} keyboardType="numeric" placeholderTextColor="#ccc" />
 
       {/* Toggle Class */}
       <View style={styles.toggleRow}>
@@ -186,6 +193,7 @@ export default function AdminFlightsScreen() {
             <Text style={styles.cardSub}>{item.departure} → {item.arrival}</Text>
             <Text style={styles.cardSub}>{(item as any).date} {item.time ? `at ${item.time}` : ''}</Text>
             <Text style={styles.cardSub}>${Number(item.price).toFixed(2)}</Text>
+            <Text style={styles.cardSub}>Capacity: {(item as any).seats_available ?? 0}/{(item as any).capacity ?? 0} seats left</Text>
             <Text style={styles.cardSub}>{((item as any).is_first_class) ? "First Class" : "Economy"}</Text>
 
             <View style={styles.cardActions}>

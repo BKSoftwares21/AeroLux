@@ -32,12 +32,12 @@ const API_URL = resolveApiUrl();
 
 export type User = { id: number; email: string; full_name: string; phone?: string | null; role: 'user' | 'admin'; date_of_birth?: string | null; id_or_passport?: string | null; last_login?: string | null; };
 export type Hotel = { id: number; name: string; city: string; country: string; description?: string | null; star_rating?: number | null };
-export type Flight = { id: number; flight_number: string; airline: string; departure: string; arrival: string; date: string; time?: string; price: number; image_url?: string; is_first_class?: boolean };
+export type Flight = { id: number; flight_number: string; airline: string; departure: string; arrival: string; date: string; time?: string; price: number; image_url?: string; is_first_class?: boolean; capacity?: number; seats_available?: number };
 
 const apiCall = async (endpoint: string, options: RequestInit = {}, userId?: number) => {
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
   
   // Add user ID to headers for authentication
@@ -184,6 +184,9 @@ export const api = {
   markBookingPaid: (id: string) =>
     apiCall(`/bookings/${id}/pay`, { method: 'PATCH' }),
   
+  cancelBooking: (id: string) =>
+    apiCall(`/bookings/${id}/cancel`, { method: 'POST' }),
+  
   deleteBooking: (id: string) => apiCall(`/bookings/${id}`, { method: 'DELETE' }),
 
   // Uploads
@@ -211,9 +214,9 @@ export const api = {
 
   // Flights
   listFlights: () => apiCall('/flights'),
-  createFlight: (payload: { flight_number: string; airline: string; departure: string; arrival: string; date: string; time?: string; price: number; image_url?: string; is_first_class?: boolean }) =>
+  createFlight: (payload: { flight_number: string; airline: string; departure: string; arrival: string; date: string; time?: string; price: number; image_url?: string; is_first_class?: boolean; capacity?: number }) =>
     apiCall('/flights', { method: 'POST', body: JSON.stringify(payload) }),
-  updateFlight: (id: number, payload: Partial<{ flight_number: string; airline: string; departure: string; arrival: string; date: string; time?: string; price: number; image_url?: string; is_first_class?: boolean }>) =>
+  updateFlight: (id: number, payload: Partial<{ flight_number: string; airline: string; departure: string; arrival: string; date: string; time?: string; price: number; image_url?: string; is_first_class?: boolean; capacity?: number; seats_available?: number }>) =>
     apiCall(`/flights/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   deleteFlight: (id: number) => apiCall(`/flights/${id}`, { method: 'DELETE' }),
   searchFlights: (q: { q?: string; airline?: string; departure?: string; arrival?: string; date?: string }) => {

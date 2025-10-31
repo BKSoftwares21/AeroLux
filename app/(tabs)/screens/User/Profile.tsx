@@ -39,10 +39,10 @@ export default function UserProfileScreen() {
         }
       } else {
         Alert.alert("Error", "Please log in to view your profile", [
-          { text: "OK", onPress: () => router.replace("/auth/login") }
+          { text: "OK", onPress: () => router.replace("/(tabs)/screens/Auth/Login") }
         ]);
       }
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to load profile. Please try again.");
     } finally {
       setLoading(false);
@@ -58,12 +58,12 @@ export default function UserProfileScreen() {
     try {
       setSaving(true);
       
-      const updates = {
+      const updates: Partial<{ full_name: string; phone?: string; date_of_birth?: string; id_or_passport?: string }> = {
         full_name: name.trim(),
-        phone: phone.trim() || null,
-        date_of_birth: dob ? dob.toISOString().split('T')[0] : null,
-        id_or_passport: idOrPassport.trim() || null,
       };
+      const p = phone.trim(); if (p) updates.phone = p;
+      if (dob) updates.date_of_birth = dob.toISOString().split('T')[0];
+      const idp = idOrPassport.trim(); if (idp) updates.id_or_passport = idp;
 
       await session.updateProfile(updates);
       Alert.alert("Success", "Your profile has been updated successfully!");
@@ -86,7 +86,7 @@ export default function UserProfileScreen() {
           style: "destructive",
           onPress: () => {
             session.logout();
-            router.replace("/auth/login");
+            router.replace("/(tabs)/screens/Auth/Login");
           }
         }
       ]
@@ -107,7 +107,7 @@ export default function UserProfileScreen() {
       {/* Header with Back Button */}
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => router.push("/screens/User/Homescreen")}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/screens/User/Homescreen")}>
           <Ionicons name="arrow-back" size={28} color="#FFD700" />
         </TouchableOpacity>
         <Text style={styles.header}>My Profile</Text>

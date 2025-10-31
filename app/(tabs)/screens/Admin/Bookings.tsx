@@ -40,6 +40,11 @@ export default function Bookings() {
     await load();
   };
 
+  const requestCancel = async (id: string | number) => {
+    await api.cancelBooking(String(id));
+    await load();
+  };
+
   const deleteBooking = async (id: string | number) => {
     await api.deleteBooking(String(id));
     await load();
@@ -89,7 +94,7 @@ export default function Bookings() {
                 <Text style={styles.actionText}>Confirm</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => cancelBooking(item.id)}
+                onPress={() => requestCancel(item.id)}
                 style={[styles.button, { backgroundColor: "#EF4444" }]}
               >
                 <Text style={styles.actionText}>Cancel</Text>

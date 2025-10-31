@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../prisma';
+import { sendEmail } from '../utils/email';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -39,6 +40,19 @@ router.post('/signup', async (req, res) => {
         role: true,
       },
     });
+
+
+    // Send welcome/confirmation email (non-blocking)
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Welcome to AeroLux',
+        text: `Hi ${user.fullName}, your AeroLux account was created successfully.`,
+        html: `<p>Hi <strong>${user.fullName}</strong>,</p><p>Your AeroLux account was created successfully.</p>`,
+      });
+    } catch (e) {
+      console.warn('Signup email failed:', (e as any)?.message || e);
+    }
 
     // Generate token
     const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, {
@@ -92,6 +106,12 @@ router.post('/login', async (req, res) => {
   }
 });
 
+
+function generateCode(): string {
+  const n = Math.floor(Math.random() * 1000000);
+  return n.toString().padStart(6, '0');
+}
+
 // Forgot password
 router.post('/forgot-password', async (req, res) => {
   try {
@@ -102,9 +122,32 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // In production, send actual email with reset code
-    // For now, return a test code
-    res.json({ ok: true, test_code: '123456', message: 'Reset code sent to email' });
+    const code = generateCode();
+    const codeHash = await bcrypt.hash(code, 10);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await prisma.passwordReset.create({
+      data: {
+        userId: user.id,
+        codeHash,
+        expiresAt,
+      },
+    });
+
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'AeroLux Password Reset Code',
+        text: `Your password reset code is ${code}. It expires in 15 minutes.`,
+        html: `<p>Your password reset code is <strong>${code}</strong>. It expires in 15 minutes.</p>`,
+      });
+    } catch (e) {
+      console.warn('Forgot-password email failed:', (e as any)?.message || e);
+    }
+
+    const payload: any = { ok: true, message: 'Reset code sent to email' };
+    if (process.env.NODE_ENV !== 'production') payload.test_code = code;
+    res.json(payload);
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ error: 'Failed to process request' });
@@ -116,21 +159,42 @@ router.post('/reset-password', async (req, res) => {
   try {
     const { email, code, new_password } = req.body;
 
-    // In production, verify the actual code sent via email
-    if (code !== '123456') {
-      return res.status(400).json({ error: 'Invalid reset code' });
-    }
-
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const hashedPassword = await bcrypt.hash(new_password, 10);
-    await prisma.user.update({
-      where: { email },
-      data: { password: hashedPassword },
+    // Find latest valid reset request
+    const reset = await prisma.passwordReset.findFirst({
+      where: { userId: user.id, used: false, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: 'desc' },
     });
+    if (!reset) {
+      return res.status(400).json({ error: 'No valid reset request found' });
+    }
+
+    const ok = await bcrypt.compare(code, (reset as any).codeHash);
+    if (!ok) {
+      return res.status(400).json({ error: 'Invalid reset code' });
+    }
+
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: user.id }, data: { password: hashedPassword } }),
+      prisma.passwordReset.update({ where: { id: reset.id }, data: { used: true, usedAt: new Date() } }),
+    ]);
+
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Your AeroLux password was changed',
+        text: 'Your password has been changed successfully. If you did not initiate this change, contact support immediately.',
+        html: '<p>Your password has been changed successfully.</p><p>If you did not initiate this change, contact support immediately.</p>',
+      });
+    } catch (e) {
+      console.warn('Password-changed email failed:', (e as any)?.message || e);
+    }
 
     res.json({ ok: true, message: 'Password reset successful' });
   } catch (error) {
@@ -138,5 +202,4 @@ router.post('/reset-password', async (req, res) => {
     res.status(500).json({ error: 'Failed to reset password' });
   }
 });
-
 export default router;

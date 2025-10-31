@@ -1,0 +1,1 @@
+-- Migration intentionally left empty to revert previous changes.

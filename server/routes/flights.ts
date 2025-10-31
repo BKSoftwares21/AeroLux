@@ -18,6 +18,8 @@ function toFlightData(body: any) {
     price: body.price !== undefined ? Number(body.price) : undefined,
     imageUrl,
     isFirstClass: Boolean(isFirstClass ?? false),
+    capacity: body.capacity !== undefined ? Number(body.capacity) : undefined,
+    seatsAvailable: body.seatsAvailable ?? body.seats_available,
   } as any;
 }
 
@@ -36,7 +38,7 @@ router.get('/', async (_req, res) => {
 router.get('/search', async (req, res) => {
   try {
     const { q, airline, departure, arrival, date } = req.query as any;
-    const where: any = {};
+    const where: any = { seatsAvailable: { gt: 0 } };
     const text = (s?: string) => s ? { contains: s, mode: 'insensitive' } : undefined;
     if (q) {
       where.OR = [
@@ -69,6 +71,8 @@ router.get('/search', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const dataIn = toFlightData(req.body);
+    const cap = Number(dataIn.capacity ?? 0);
+    const seats = dataIn.seatsAvailable !== undefined ? Number(dataIn.seatsAvailable) : cap;
     const flight = await prisma.flight.create({
       data: {
         flightNumber: dataIn.flightNumber,
@@ -80,6 +84,8 @@ router.post('/', async (req, res) => {
         price: dataIn.price ?? 0,
         imageUrl: dataIn.imageUrl,
         isFirstClass: dataIn.isFirstClass ?? false,
+        capacity: cap,
+        seatsAvailable: seats,
       },
     });
     res.status(201).json({ flight });
@@ -106,6 +112,8 @@ router.put('/:id', async (req, res) => {
         ...(dataIn.price !== undefined && { price: dataIn.price }),
         ...(dataIn.imageUrl !== undefined && { imageUrl: dataIn.imageUrl }),
         ...(dataIn.isFirstClass !== undefined && { isFirstClass: dataIn.isFirstClass }),
+        ...(dataIn.capacity !== undefined && { capacity: Number(dataIn.capacity) }),
+        ...(dataIn.seatsAvailable !== undefined && { seatsAvailable: Number(dataIn.seatsAvailable) }),
       },
     });
     res.json({ flight });
