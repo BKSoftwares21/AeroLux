@@ -6,6 +6,7 @@ import UserModal from './UserModal';
 export default function HomeScreen() {
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [userName] = useState('User'); // replace with real user from auth when available
 
   return (
     <>
@@ -26,8 +27,17 @@ export default function HomeScreen() {
         </View>
         
 
-        {/* Welcome Message */}
-        <Text style={styles.welcomeText}>Welcome Benita!</Text>
+        {/* Decorative Welcome Card */}
+        <View style={styles.welcomeCard}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{userName[0]}</Text>
+          </View>
+          <View style={styles.welcomeTextWrapper}>
+            <Text style={styles.greeting}>Welcome back,</Text>
+            <Text style={styles.userName}>{userName} ✨</Text>
+            <Text style={styles.subtitle}>Find the best deals for your next trip.</Text>
+          </View>
+        </View>
 
         {/* Offer Card */}
         <View style={styles.offerCard}>
@@ -36,14 +46,14 @@ export default function HomeScreen() {
             style={styles.offerImage} 
           />
           <View style={styles.offerContent}>
-            <Text style={styles.offerLabel}>LIMITED TIME OFFER</Text>
+
             <Text style={styles.offerTitle}>The Bahamas, America</Text>
             <Text style={styles.offerDetails}>5 Days, 4 Nights</Text>
             <Text style={styles.offerPrice}>
-              $899 <Text style={styles.offerDiscount}>-20%</Text>
+              $899 
             </Text>
-            <TouchableOpacity style={styles.offerButton}>
-              <Text style={styles.offerButtonText}>GET OFFER</Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/screens/User/SearchScreen')}style={styles.offerButton}>
+              <Text style={styles.offerButtonText}>SEE MORE LOCATIONS</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -79,11 +89,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#0A1A2F',
   },
   navItem: {
- width: 48,
-   height: 48,
-  alignItems: 'center',
-  justifyContent: 'center',
- },
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   topNav: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -99,6 +109,53 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#ffffff',
   },
+
+  /* New welcome card styles */
+  welcomeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#12233B',
+    marginHorizontal: 20,
+    marginTop: 10,
+    padding: 16,
+    borderRadius: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#D4AF37',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    color: '#0A1A2F',
+    fontWeight: 'bold',
+    fontSize: 28,
+  },
+  welcomeTextWrapper: {
+    flex: 1,
+  },
+  greeting: {
+    color: '#9FB4D6',
+    fontSize: 14,
+  },
+  userName: {
+    color: '#FFD700',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginVertical: 2,
+  },
+  subtitle: {
+    color: '#B9CFE6',
+    fontSize: 13,
+  },
+
   welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -124,11 +181,7 @@ const styles = StyleSheet.create({
   offerContent: {
     marginTop: 10,
   },
-  offerLabel: {
-    color: '#D4AF37',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
+
   offerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -143,10 +196,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginVertical: 5,
   },
-  offerDiscount: {
-    color: 'red',
-    fontSize: 16,
-  },
+
   offerButton: {
     backgroundColor: '#D4AF37',
     borderRadius: 15,
@@ -160,20 +210,19 @@ const styles = StyleSheet.create({
   },
   bottomNav: {
     position: 'absolute',
- bottom: 20,
- left: 20,
- right: 20,
-  height: 64,
- flexDirection: 'row',
-justifyContent: 'space-between',
-alignItems: 'center',
-backgroundColor: '#fff',
-paddingHorizontal: 28,
-borderRadius: 30,
-shadowColor: '#000',
-shadowOpacity: 0.12,
-shadowRadius: 6,
-  elevation: 6,
-  
+    bottom: 20,
+    left: 20,
+    right: 20,
+    height: 64,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 28,
+    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 6,
   },
 });
